@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "692922967175",
+    "firebase_url": "https://speedy-273302.firebaseio.com",
+    "project_id": "speedy-273302",
+    "storage_bucket": "speedy-273302.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692922967175:android:794581c129d85e9a450422",
+        "android_client_info": {
+          "package_name": "com.lastminutessay.us"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "692922967175-kgn65avnolomjugnngsipmj41jrktbg5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6_aPyZo5OadJtbaXOPE6R8cJK5QPo6Yg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "692922967175-kgn65avnolomjugnngsipmj41jrktbg5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
