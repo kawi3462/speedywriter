@@ -11,4 +11,7 @@ class PageTitles {
   static const String uploadmaterials = 'Upload Materials';
   static const String orderingstagetwo = "Place Order:Step 2";
     static const String editorder = "Edit Order ";
+        static const String cardpayments = "Card Payments ";
+         static const String billing = "Billing Details ";
+        
 }

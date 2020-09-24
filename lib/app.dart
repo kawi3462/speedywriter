@@ -12,6 +12,8 @@ import 'package:speedywriter/approuteobserver.dart';
 import 'package:speedywriter/common/routenames.dart';
 import 'package:speedywriter/firstpage.dart';
 import 'package:speedywriter/home.dart';
+import 'package:speedywriter/ordering/cardpayments.dart';
+import 'package:speedywriter/ordering/makepayment.dart';
 
 import 'package:speedywriter/ordering/getquote.dart';
 import 'package:speedywriter/ordering/paypal.dart';
@@ -84,10 +86,14 @@ class _MyAppState extends State<MyApp> {
                 RouteNames.orderthankyou: (_) =>
                     OrderThankYou(model: widget.model),
                 RouteNames.uploadMaterial: (_) => UploadMaterial(),
-                RouteNames.paypal: (_) => PayPal(model: widget.model),
+           
                 RouteNames.updatePassword: (_) => UpdatePassword(),
                 RouteNames.myorders: (_) => MyOrders(),
                 RouteNames.editorder: (_) => EditOrder(),
+                     RouteNames.paypal: (_) => PayPal(model: widget.model),
+           RouteNames.cardpayments: (_) => CardPayment(model: widget.model),
+     RouteNames.makepayments: (_) => MakePayment (model: widget.model),
+
               },
             )));
   }

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:scoped_model/scoped_model.dart';
+
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:speedywriter/account/forgot.dart';
+
 import 'package:speedywriter/account/usermodel.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 import 'package:speedywriter/common/colors.dart';
 import 'package:speedywriter/common/routenames.dart';
 import 'package:speedywriter/network_utils/api.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:html/parser.dart';
+
 
 class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();

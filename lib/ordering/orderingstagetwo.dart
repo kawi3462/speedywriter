@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:speedywriter/account/manageorders/myorderseriazable.dart';
 
 import 'package:speedywriter/common/drawer.dart';
 import 'package:speedywriter/common/page_titles.dart';
@@ -145,10 +146,36 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
       if (response.statusCode == 201) {
         jsonResponse = jsonDecode(response.body);
 
+     Myorder _myorder= Myorder(
+        jsonResponse['id'].toString(),
+       jsonResponse['email'],
+ jsonResponse['topic'],
+ jsonResponse['subject'],
+ jsonResponse['pages'],
+  jsonResponse['style'],
+ jsonResponse['document'],
+  jsonResponse['academiclevel'],
+     jsonResponse['langstyle'],
+ jsonResponse['urgency'],
+ jsonResponse['spacing'],
+
+          jsonResponse['total'],
+      jsonResponse['description'],
+      jsonResponse['status'],
+ jsonResponse['payment'],
+jsonResponse['created_at'],
+  jsonResponse['updated_at'],
+     );
+
+
+
+
         //   _showMsg("Order submitted successfuly");
         //Load user orders after adding a new order
-        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-            .loadUserOrders();
+    ScopedModel.of<UserModel>(context, rebuildOnChange: true).addNewOrderToPendingOrders(_myorder);
+
+      //  ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+           // .loadUserOrders();
         //End loading user orders
     
         
@@ -160,7 +187,7 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
         if (_checked == 'Yes') {
           Navigator.pushNamed(context, RouteNames.uploadMaterial,
               arguments: FinalOrderDetails(
-                jsonResponse['id'],
+           jsonResponse['id'],
                 jsonResponse['email'],
                 jsonResponse['subject'],
                 jsonResponse['document'],
@@ -170,7 +197,7 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
         } else {
           Navigator.pushNamed(context, RouteNames.paypal,
               arguments: FinalOrderDetails(
-                jsonResponse['id'],
+      jsonResponse['id'],
                 jsonResponse['email'],
                 jsonResponse['subject'],
                 jsonResponse['document'],
@@ -178,7 +205,8 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
                 jsonResponse['urgency'],
               ));
         }
-      } else if (response.statusCode == 422) {
+      } 
+      else if (response.statusCode == 422) {
         jsonResponse = jsonDecode(response.body);
 
         //  print(jsonResponse);
@@ -188,7 +216,8 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
         });
 
         _showMsg("Order Not submitted ");
-      } else if (response.statusCode == 401) {
+      } 
+      else if (response.statusCode == 401) {
         setState(() {
           _isLoading = false;
         });
@@ -202,12 +231,14 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
 
         _showMsg("Order Not submitted ");
       }
-    } catch (e) {
-      // print(e);
+    } 
+    catch (e) {
+      print("error is");
+       print(e);
       setState(() {
         _isLoading = false;
       });
-      _showMsg("Cannot connect with the  server");
+      _showMsg("Server  error");
     }
   }
 
@@ -350,7 +381,8 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[50]))),
+                    borderSide: BorderSide(color: Colors.grey[50]))
+                    ),
             hint: Text('Writing style'),
             value: _iswritingStyleSelected ? _writingStyle : null,
             validator: (value) {

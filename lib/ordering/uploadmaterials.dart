@@ -11,12 +11,10 @@ import 'package:http/http.dart' as http;
 import 'package:speedywriter/common/colors.dart';
 
 import 'package:path/path.dart' as path;
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:speedywriter/network_utils/api.dart';
 import 'finalorderdetails.dart';
 
-import 'package:speedywriter/ordering/paypal.dart';
-import 'package:speedywriter/appscaffold.dart';
 import 'package:speedywriter/common/routenames.dart';
 
 import 'package:speedywriter/common/page_titles.dart';

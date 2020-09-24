@@ -14,7 +14,8 @@ static const String     paypal='/PayPal';
 static const String   updatePassword='/updatePassword';
 static const String   myorders='/myorders';
 static const String   editorder='/editorder';
-
+static const String   cardpayments='/cardpayments';
+static const String   makepayments='/makepayments';
 
 
 }

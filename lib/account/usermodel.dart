@@ -16,6 +16,9 @@ class UserModel extends Model {
   bool userHasProfileImage = false;
   String avatarImageUrl;
     bool orderHasFiles = false;
+    String publickey;
+    String enckey;
+
   //Map pendingOrders;
   List<Myorder> pendingOrders = List<Myorder>();
   List<Myorder> assignedOrders = List<Myorder>();
@@ -102,6 +105,58 @@ class UserModel extends Model {
 
 //End pending orders
 
+//Add a new order after submiting it
+void addNewOrderToPendingOrders(Myorder _myorder ){
+pendingOrders.add(_myorder);
+notifyListeners();
+
+
+}
+
+
+
+//Method to load card payments keys
+void loadCardPaymentKeys() async
+{
+if(isUserLoggedIn)
+{
+
+
+var _url = "/getcardkeys/1";
+      try {
+        var _response = await Network().getData(_url);
+
+        if (_response.statusCode == 200) {
+ var _jsonResponse = json.decode(_response.body);
+           publickey=_jsonResponse['public_key'];
+enckey=_jsonResponse['enc_key'];
+
+        
+           
+              notifyListeners();
+      
+        }
+        else{
+         enckey=null;
+           publickey=null;
+
+        }
+      } 
+      catch (e) {
+        print(e);
+      }
+
+
+}
+
+
+}
+
+
+
+
+
+//End method to load card payment keys
   //Method to load user orders
 
   void loadUserOrders() async {

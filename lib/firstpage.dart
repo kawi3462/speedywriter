@@ -179,6 +179,11 @@ if (_token!=null) {
     _completed = ScopedModel.of<UserModel>(context, rebuildOnChange: true)
         .completedOrders;
     //End loading user orders
+//load card payment keys
+
+      ScopedModel.of<UserModel>(context, rebuildOnChange: false).loadCardPaymentKeys();
+//
+
       ScopedModel.of<UserModel>(context, rebuildOnChange: false).loadUserOrderMaterials();
 
     _width = MediaQuery.of(context).size.width;

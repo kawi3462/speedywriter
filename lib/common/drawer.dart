@@ -161,7 +161,7 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
                       title: Text('Chat Admin'),
                       onTap: () {}),
                   ListTile(
-                      leading: Icon(MyFlutterApp.list_numbered),
+                      leading: Icon(MyFlutterApp.list_alt),
                       title: Text('Policies'),
                       onTap: () {}),
                   Divider(),
@@ -269,7 +269,7 @@ Navigator.of(context)
                       onTap: () {}),
 
                   ListTile(
-                      leading: Icon(MyFlutterApp.list_numbered),
+                      leading: Icon(MyFlutterApp.list_alt),
                       title: Text('Policies'),
                       onTap: () {}),
                   Divider(),

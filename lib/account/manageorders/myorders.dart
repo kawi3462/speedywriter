@@ -1149,15 +1149,7 @@ class _MyOrdersState extends State<MyOrders> {
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
-                                color: Colors.grey[300],
-                                onPressed: () {
-                                  _myorder = order;
-
-                                  pendingOrdersView(_myorder);
-                                },
-                                child: Text('View'),
-                              )),
+                            
                               DataCell(RaisedButton(
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
@@ -1165,7 +1157,7 @@ class _MyOrdersState extends State<MyOrders> {
                                       .setTotalCost(double.parse(order.total));
 
                                   Navigator.pushNamed(
-                                      context, RouteNames.paypal,
+                                    context, RouteNames.makepayments,
                                       arguments: FinalOrderDetails(
                                         int.parse(order.id),
                                         order.email,
@@ -1177,6 +1169,18 @@ class _MyOrdersState extends State<MyOrders> {
                                 },
                                 child: Text('Pay'),
                               ))
+                              ,
+                              DataCell(FlatButton(
+                                color: Colors.grey[300],
+                                onPressed: () {
+                                  _myorder = order;
+
+                                  pendingOrdersView(_myorder);
+                                },
+                                child: Text('View'),
+                              )
+                              )
+                              
                             ]))
                         .toList(),
                   ),
@@ -1319,23 +1323,14 @@ class _MyOrdersState extends State<MyOrders> {
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
-                                color: Colors.grey[300],
-                                onPressed: () {
-                                  _myorder = order;
-
-                                  pendingOrdersView(_myorder);
-                                },
-                                child: Text('View'),
-                              )),
-                              DataCell(RaisedButton(
+                                 DataCell(RaisedButton(
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
                                           rebuildOnChange: true)
                                       .setTotalCost(double.parse(order.total));
 
                                   Navigator.pushNamed(
-                                      context, RouteNames.paypal,
+                                      context, RouteNames.makepayments,
                                       arguments: FinalOrderDetails(
                                         int.parse(order.id),
                                         order.email,
@@ -1346,7 +1341,18 @@ class _MyOrdersState extends State<MyOrders> {
                                       ));
                                 },
                                 child: Text('Pay'),
+                              )
+                              ),
+                              DataCell(FlatButton(
+                                color: Colors.grey[300],
+                                onPressed: () {
+                                  _myorder = order;
+
+                                  pendingOrdersView(_myorder);
+                                },
+                                child: Text('View'),
                               )),
+                           
                             ]))
                         .toList(),
                   ),
@@ -1503,7 +1509,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _progress
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
@@ -1596,7 +1602,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _progress
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
@@ -1699,7 +1705,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _revision
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
@@ -1790,7 +1796,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _revision
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
@@ -1898,7 +1904,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _completed
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.pages)),
@@ -1981,7 +1987,7 @@ class _MyOrdersState extends State<MyOrders> {
                             fontWeight: FontWeight.w800, color: Colors.black),
                       )),
                     ],
-                    rows: _pending
+                    rows: _completed
                         .map((order) => DataRow(cells: [
                               DataCell(Text(order.id)),
                               DataCell(Text(order.total)),

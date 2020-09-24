@@ -1,10 +1,9 @@
 import 'dart:convert';
-import 'package:intl/intl.dart';
+
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speedywriter/account/manageorders/editorderdetails.dart';
 import 'package:speedywriter/common/drawer.dart';
 import 'package:speedywriter/common/page_titles.dart';
@@ -13,10 +12,10 @@ import 'package:speedywriter/common/routenames.dart';
 import 'package:speedywriter/common/appbar.dart';
 import 'package:speedywriter/common/colors.dart';
 import 'package:speedywriter/ordering/finalorderdetails.dart';
-import 'package:speedywriter/ordering/orderdetails.dart';
-import 'package:speedywriter/serializablemodelclasses/order.dart';
+
+
 import 'package:speedywriter/network_utils/api.dart';
-import 'package:grouped_buttons/grouped_buttons.dart';
+
 
 import 'package:speedywriter/account/usermodel.dart';
 
@@ -87,11 +86,7 @@ class _EditOrderState extends State<EditOrder> {
 
       _topic = _topicController.text;
       _instructions = _instructionsController.text;
-      print("=========================order details");
-      print(_topic);
-      print(_instructions);
-      print(_prefferedLanguage);
-      print(_writingStyle);
+   
 
       Map _data = {
         'description': _instructions,
@@ -146,7 +141,7 @@ class _EditOrderState extends State<EditOrder> {
       } else if (response.statusCode == 422) {
         jsonResponse = jsonDecode(response.body);
 
-        print(jsonResponse);
+      //  print(jsonResponse);
 
         setState(() {
           _isLoading = false;
@@ -161,7 +156,8 @@ class _EditOrderState extends State<EditOrder> {
 
         _showMsg("Order Not submitted ");
       }
-    } catch (e) {
+    } 
+    catch (e) {
       // print(e);
       setState(() {
         _isLoading = false;
@@ -189,6 +185,7 @@ class _EditOrderState extends State<EditOrder> {
 
   @override
   Widget build(BuildContext context) {
+        final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
     _token = ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
     _email = ScopedModel.of<UserModel>(context, rebuildOnChange: true).email;
     _details = ModalRoute.of(context).settings.arguments;
@@ -199,17 +196,27 @@ class _EditOrderState extends State<EditOrder> {
     _focusNodeSubmitButton = FocusNode();
 
    
-
-    final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
-    return Row(children: [
-      if (!displayMobileLayout)
-        const SimpleDrawer(
-          permanentlyDisplay: true,
-        ),
-      Expanded(
+   return Row(
+      children: [
+        if (!displayMobileLayout)
+          const SimpleDrawer(
+            permanentlyDisplay: true,
+          ),
+        Expanded(
           child: Scaffold(
-              key: _scaffoldkeyEditOrder,
-              appBar: buildAppBar(PageTitles.editorder),
+            key: _scaffoldkeyEditOrder,
+            appBar: AppBar(
+              // when the app isn't displaying the mobile version of app, hide the menu button that is used to open the navigation drawer
+              automaticallyImplyLeading: displayMobileLayout,
+              title: Text(
+                PageTitles.editorder,
+              ),
+            ),
+            drawer: displayMobileLayout
+                ? const SimpleDrawer(
+                    permanentlyDisplay: false,
+                  )
+                : null,
               body: SafeArea(
                   child: Container(
                       padding: EdgeInsets.all(20.0),

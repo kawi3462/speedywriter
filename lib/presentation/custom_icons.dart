@@ -37,9 +37,13 @@ class MyFlutterApp {
   static const _kFontFam = 'MyFlutterApp';
   static const _kFontPkg = null;
 
-  static const IconData logout = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+   static const IconData logout = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData login = IconData(0xe801, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-  static const IconData wallet = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-  static const IconData calculator = IconData(0xe803, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-  static const IconData list_numbered = IconData(0xf0cb, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData calculator = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData wallet = IconData(0xe803, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData list_alt = IconData(0xf022, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData cc_visa = IconData(0xf1f0, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData cc_mastercard = IconData(0xf1f1, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData cc_paypal = IconData(0xf1f4, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+
 }
