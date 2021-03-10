@@ -9,7 +9,7 @@ class Order
 {
 Order(
 
-  this.email,
+
   this.topic,
   this.subject,
   this.pages,
@@ -23,14 +23,14 @@ Order(
   this.description,
   this.status,
   this.payment,
-  this.created_at,
+
 
 
   
   );
    
 
-  String email;
+
   String topic;
   String subject;
   String pages;
@@ -44,7 +44,7 @@ Order(
   String description;
   String status;
   String payment;
-  String created_at;
+
 
 
 

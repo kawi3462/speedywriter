@@ -60,32 +60,66 @@ class _UpdatePasswordState extends State<UpdatePassword> {
   void updatePassword(String _password) async {
     String _token =
         ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
-    String _email =
-        ScopedModel.of<UserModel>(context, rebuildOnChange: true).user.email;
+    // String _email =
+    //     ScopedModel.of<UserModel>(context, rebuildOnChange: true).user.email;
+        String _userid=ScopedModel.of<UserModel>(context, rebuildOnChange: true).userid;
 
-    Map _data = {'email': _email, 'password': _password};
-    var apiUrl = "/loggedResetPassword";
+    Map _data = {'password': _password};
+    var apiUrl = "/user/changepassword/"+_userid;
 
     try {
       String _jsonData = jsonEncode(_data);
 
       var _response = await Network().submitData(_jsonData, apiUrl, _token);
-      if (_response.statusCode == 201) {
+
+
+
+      if (_response.statusCode == 200) {
         _showMsg("Password update successful..Kindly login again");
 
         ScopedModel.of<UserModel>(context, rebuildOnChange: true)
             .setUserStatus(false);
         await Network().logOut();
         Navigator.pushNamed(context, RouteNames.login);
-      } else if (_response.statusCode == 400) {
+      } 
+
+
+      else if (_response.statusCode == 400) {
         _showMsg("Password update failed..Kindly try again");
-      } else if (_response == null) {
+      } 
+       else if (_response.statusCode == 429) {
+          setState(() {
+     
+          _isLoading = false;
+        });
+        _showMsg("Too Many Attempts..Kindly try again after 10 minutes");
+      } 
+
+else if (_response.statusCode == 422) {
+          setState(() {
+     
+          _isLoading = false;
+        });
+        _showMsg("The given data was invalid.");
+      } 
+
+
+
+      else if (_response == null) {
         _showMsg("Unable to connect with remote server");
       } else {
+       setState(() {
+     
+          _isLoading = false;
+        });
+
+        print("serverresponse =========");
+        print(_response.statusCode.toString());
+        print(_response.body.toString());
         _showMsg("System encoutered an error.Kindly try again");
       }
     } catch (e) {
-      print("error==========================");
+   
       print(e);
     }
   }

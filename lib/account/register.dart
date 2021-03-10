@@ -6,12 +6,14 @@ import 'package:speedywriter/common/colors.dart';
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speedywriter/common/cutcornerborders.dart';
 import 'package:speedywriter/common/routenames.dart';
 import 'package:speedywriter/network_utils/api.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:speedywriter/common/page_titles.dart';
 
 import 'package:flutter_country_picker/flutter_country_picker.dart';
+import 'package:flutter/services.dart';
 
 class Register extends StatefulWidget {
   _RegisterState createState() => _RegisterState();
@@ -26,6 +28,7 @@ class _RegisterState extends State<Register> {
   final TextEditingController _confirmpasswordController =
       TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final CutCornersBorder cutcornersborder=new CutCornersBorder();
 
   FocusNode _focusNodeFname;
   FocusNode _focusPhone;
@@ -122,49 +125,46 @@ class _RegisterState extends State<Register> {
 
     Map data = {
       'name': name,
-      'phone': phone,
-      'country': country,
       'email': email,
+      'country': country,
       'password': password,
-      'password_confirmation': passwordConfirm
+      'phone_number': phone
+  
+   
     };
 
     String signupdata = jsonEncode(data);
-    var apiUrl = "/signup";
+  
 
     try {
-      var response = await Network().authData(signupdata, apiUrl);
+      var response = await Network().signUpData(signupdata);
 
       if (response.statusCode == 201) {
-        //Get User Information and register token and email
-        Map logindata = {
-          'email': email,
-          'password': password,
-        };
-        apiUrl = "/login";
-        var jsonResponse = null;
-        String jsonData = jsonEncode(logindata);
 
-        var response = await Network().signUpData(jsonData, apiUrl);
-        if (response.statusCode == 200) {
-          jsonResponse = json.decode(response.body);
-          if (jsonResponse != null) {
-            sharedPreferences.setString("token", jsonResponse['access_token']);
-            sharedPreferences.setString('email', email);
+    var jsonResponse = json.decode(response.body)['data'];
+        if (jsonResponse != null) {
+          sharedPreferences.setString("token", jsonResponse['api_token']);
+          sharedPreferences.setString('email', email);
+              sharedPreferences.setString('userid', jsonResponse['id'].toString());
 
-            var apiUrl = "/user";
+        
+          var apiUrl = "/user/"+jsonResponse['id'].toString();
 
-            var userdetailsresponse = await Network()
-                .getUserData(apiUrl, jsonResponse['access_token']);
+          var userdetailsresponse =
+              await Network().getUserData(apiUrl,jsonResponse['api_token']);
 
-            Map userMap = jsonDecode(userdetailsresponse.body);
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                .addUserDetails(userMap);
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                .setUserStatus(true);
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                .setTokenAndUserEmail(jsonResponse['access_token'], email);
+          Map userMap = jsonDecode(userdetailsresponse.body)['data'];
+          
+        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+        .addUserDetails(userMap);
 
+        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+          .setUserStatus(true);
+       ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+         .setTokenAndUserEmail(jsonResponse['api_token'], email,jsonResponse['id'].toString());
+
+
+    
             setState(() {
               _isLoading = false;
             });
@@ -175,7 +175,8 @@ class _RegisterState extends State<Register> {
         }
 
         //End register of token and email
-      } else if (response.statusCode == 422) {
+       
+      else if (response.statusCode == 422) {
         _showMsg(
             "The email has already been registered...Login or click forgot password please");
 
@@ -185,7 +186,8 @@ class _RegisterState extends State<Register> {
       } else if (response.statusCode >= 500) {
         _showMsg("Server connection error");
       }
-    } catch (e) {
+    } 
+    catch (e) {
       print(e);
       setState(() {
         _isLoading = false;
@@ -280,14 +282,19 @@ class _RegisterState extends State<Register> {
                                   filled: true,
                                   labelText: 'First & Second Name '))),
                       SizedBox(height: 16.0),
-                      ClipPath(
+                  InputDecorator(
+              decoration: InputDecoration(
+             
+                  border: cutcornersborder,
+                    
+                    ),
                         child: AccentColorOverride(
                             color: speedyBrown900,
                             child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.rectangle,
                                 ),
-                                height: 50,
+                             
                                 child: CountryPicker(
                                   dense: false,
                                   showFlag:
@@ -307,7 +314,7 @@ class _RegisterState extends State<Register> {
                                   },
                                   selectedCountry: _selected,
                                 ))),
-                        clipper: CustomClipPath(),
+                       
                       ),
                       SizedBox(height: 16.0),
                       AccentColorOverride(
@@ -383,6 +390,8 @@ class _RegisterState extends State<Register> {
                               textInputAction: TextInputAction.done,
                               focusNode: _focusNodeConfirmPassword,
                               onFieldSubmitted: (value) {
+                                     SystemChannels.textInput.invokeMethod('TextInput.hide');
+
                                 _focusNodeConfirmPassword.unfocus();
                                 _validateUserRegister();
                               },

@@ -9,6 +9,7 @@ import 'package:speedywriter/account/resetpassword.dart';
 import 'package:speedywriter/account/updatepassword.dart';
 import 'package:speedywriter/account/usermodel.dart';
 import 'package:speedywriter/approuteobserver.dart';
+import 'package:speedywriter/chatadmin.dart';
 import 'package:speedywriter/common/routenames.dart';
 import 'package:speedywriter/firstpage.dart';
 import 'package:speedywriter/home.dart';
@@ -29,6 +30,8 @@ import 'ordering/orderstrings.dart';
 import 'ordering/ordercalculations.dart';
 import 'ordering/orderingstagetwo.dart';
 import 'account/manageorders/editorder.dart';
+import 'account/referral.dart';
+import 'package:speedywriter/policy.dart';
 
 class MyApp extends StatefulWidget {
   final OrderModel model = OrderModel();
@@ -39,6 +42,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  String url;
+  String title;
   @override
   void initState() {
     super.initState();
@@ -51,8 +56,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-
     return ScopedModel(
 
         //End todo :implement
@@ -79,21 +82,26 @@ class _MyAppState extends State<MyApp> {
                       orderStrings: OrderStrings(),
                     ),
                 RouteNames.profile: (_) => Profile(),
-      RouteNames.resetpassword: (context) => ResetPassword(),
-           RouteNames.orderStageTwo :(context) => OrderStageTwo(
+                RouteNames.resetpassword: (context) => ResetPassword(),
+                RouteNames.orderStageTwo: (context) => OrderStageTwo(
                       model: widget.model,
                     ),
                 RouteNames.orderthankyou: (_) =>
                     OrderThankYou(model: widget.model),
                 RouteNames.uploadMaterial: (_) => UploadMaterial(),
-           
                 RouteNames.updatePassword: (_) => UpdatePassword(),
                 RouteNames.myorders: (_) => MyOrders(),
                 RouteNames.editorder: (_) => EditOrder(),
-                     RouteNames.paypal: (_) => PayPal(model: widget.model),
-           RouteNames.cardpayments: (_) => CardPayment(model: widget.model),
-     RouteNames.makepayments: (_) => MakePayment (model: widget.model),
+                RouteNames.paypal: (_) => PayPal(model: widget.model),
+                RouteNames.cardpayments: (_) =>
+                    CardPayment(model: widget.model),
+                RouteNames.makepayments: (_) =>
+                    MakePayment(model: widget.model),
+                RouteNames.chatAdmin: (_) => ChatAdmin(),
+                RouteNames.referral: (_) => ReferralUI(),
+                RouteNames.policy: (context) => Policy(),
 
+                
               },
             )));
   }

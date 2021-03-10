@@ -9,6 +9,7 @@ import 'colors.dart';
 import 'package:speedywriter/presentation/custom_icons.dart';
 import 'package:speedywriter/serializablemodelclasses/user.dart';
 import 'package:speedywriter/common/routenames.dart';
+import 'package:speedywriter/common/policiesbottomsheet.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
 class SimpleDrawer extends StatefulWidget {
@@ -63,7 +64,7 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
 
     if (_isUserLoggedIn) {
       _user = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user;
-      
+
       _hasprofileimage =
           ScopedModel.of<UserModel>(context, rebuildOnChange: true)
               .userHasProfileImage;
@@ -87,14 +88,17 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
                           child: Row(children: [
                             InkWell(
                                 onTap: () {
-                                  Navigator.pushNamed(context, RouteNames.profile);
+                                  Navigator.pushNamed(
+                                      context, RouteNames.profile);
                                 },
                                 child: CircleAvatar(
                                     backgroundColor: Color(0xFFE6F0FA),
                                     radius: 55,
                                     child: ClipOval(
                                       child: _hasprofileimage
-                                          ? Image.network(
+                                          ?
+                                          // Image.memory(bytes)
+                                          Image.network(
                                               _imageUrl,
                                               width: 100,
                                               height: 100,
@@ -123,7 +127,6 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
                     leading: Icon(Icons.home),
                     title: Text('Home'),
                     onTap: () async {
-                  
                       _navigateTo(context, RouteNames.home);
                     },
                     selected: _selectedRoute == RouteNames.home,
@@ -155,15 +158,36 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
                   ListTile(
                       leading: Icon(Icons.person_add),
                       title: Text('Refer a friend'),
-                      onTap: () {}),
+                      selected: _selectedRoute == RouteNames.referral,
+                      onTap: () async {
+                        _navigateTo(context, RouteNames.referral);
+                      }),
                   ListTile(
                       leading: Icon(Icons.chat),
                       title: Text('Chat Admin'),
-                      onTap: () {}),
+                      onTap: () async {
+                        _navigateTo(context, RouteNames.chatAdmin);
+                      },
+                      selected: _selectedRoute == RouteNames.chatAdmin),
                   ListTile(
                       leading: Icon(MyFlutterApp.list_alt),
                       title: Text('Policies'),
-                      onTap: () {}),
+                      onTap: () {
+                   showModalBottomSheet(
+                     elevation: 10,
+            isDismissible: true,
+            useRootNavigator: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10))),
+            context: context,
+            builder: (BuildContext context) {
+              return  PoliciesBottomSheetState();
+            });
+                        // _navigateTo(context, RouteNames.policy);
+                      },
+                      selected: _selectedRoute == RouteNames.policy),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.account_box),
@@ -186,20 +210,16 @@ class _SimpleDrawerState extends State<SimpleDrawer> with RouteAware {
                     leading: Icon(MyFlutterApp.logout),
                     title: Text('Log Out'),
                     onTap: () async {
+                      ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+                          .setUserStatus(false);
 
-                      ScopedModel.of<UserModel>(context, rebuildOnChange: true) .setUserStatus(false);
-
-                      
+                      ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+                          .userHasProfileImage = false;
                       await Network().logOut();
-Navigator.of(context)
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          RouteNames.login, (Route<dynamic> route) => false);
 
-
-    .pushNamedAndRemoveUntil(RouteNames.login, (Route<dynamic> route) => false);
-
-                  
-
-                     // _navigateTo(context, RouteNames.login);
-
+                      // _navigateTo(context, RouteNames.login);
                     },
                     selected: _selectedRoute == RouteNames.login,
                   ),
@@ -243,8 +263,9 @@ Navigator.of(context)
                   ListTile(
                     leading: Icon(Icons.add),
                     title: Text('New Order'),
-                    onTap: () {
-                      _showDialog();
+                    onTap: () async {
+                      _showDialog(
+                          'Before you can submit a new order you need to either login to your account or sign up');
                     },
                     selected: _selectedRoute == RouteNames.login,
                   ),
@@ -261,17 +282,42 @@ Navigator.of(context)
                   ListTile(
                       leading: Icon(Icons.person_add),
                       title: Text('Refer a friend'),
-                      onTap: () {}),
+                      onTap: () async {
+                        _showDialog(
+                            "To  refer a friend  you need to either login to your account or sign up");
+                      },
+                      selected: _selectedRoute == RouteNames.referral),
 
                   ListTile(
                       leading: Icon(Icons.chat),
                       title: Text('Chat Admin'),
-                      onTap: () {}),
+                      onTap: () async {
+                        _navigateTo(context, RouteNames.chatAdmin);
+                      },
+                      selected: _selectedRoute == RouteNames.chatAdmin),
 
                   ListTile(
                       leading: Icon(MyFlutterApp.list_alt),
                       title: Text('Policies'),
-                      onTap: () {}),
+                      onTap: () async {
+
+
+     showModalBottomSheet(
+            isDismissible: true,
+            useRootNavigator: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10))),
+            context: context,
+            builder: (BuildContext context) {
+              return  PoliciesBottomSheetState();
+            });
+
+
+                      },
+                          selected: _selectedRoute == RouteNames.policy),
+                      
                   Divider(),
 
                   ListTile(
@@ -294,14 +340,13 @@ Navigator.of(context)
     ));
   }
 
-  Future<void> _showDialog() async {
+  Future<void> _showDialog(String message) async {
     return AwesomeDialog(
       context: context,
       dialogType: DialogType.WARNING,
       animType: AnimType.BOTTOMSLIDE,
       title: ' Would you like to login or sign up?',
-      desc:
-          'Before you can submit a new order you need to either login to your account or sign up ',
+      desc: message,
       btnCancelOnPress: () {
         Navigator.pop(context);
       },

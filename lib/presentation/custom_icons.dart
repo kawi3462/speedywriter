@@ -37,13 +37,26 @@ class MyFlutterApp {
   static const _kFontFam = 'MyFlutterApp';
   static const _kFontPkg = null;
 
-   static const IconData logout = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+   
+   
+  
+  
+  static const IconData logout = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData login = IconData(0xe801, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData calculator = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData wallet = IconData(0xe803, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData trash_empty = IconData(0xe804, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData attach = IconData(0xe805, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData money = IconData(0xe806, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData download = IconData(0xe807, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData cw = IconData(0xe808, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData whatsapp_1 = IconData(0xe809, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData list_alt = IconData(0xf022, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData edit = IconData(0xf044, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData eye = IconData(0xf06e, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData cc_visa = IconData(0xf1f0, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData cc_mastercard = IconData(0xf1f1, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData cc_paypal = IconData(0xf1f4, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData user_edit = IconData(0xf4ff, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 
 }

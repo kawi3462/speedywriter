@@ -18,6 +18,7 @@ import 'package:speedywriter/serializablemodelclasses/order.dart';
 import 'package:speedywriter/network_utils/api.dart';
 import 'package:grouped_buttons/grouped_buttons.dart';
 import 'finalorderdetails.dart';
+import 'package:speedywriter/common/cutcornerborders.dart';
 
 import 'package:speedywriter/account/usermodel.dart';
 
@@ -38,10 +39,13 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
   bool _isLoading = false;
   String _checked = null;
   bool _isMaterialsNotChecked = false;
+  String _userid;
+   final CutCornersBorder cutcornersborder=new CutCornersBorder();
 
 //==============end  variables================
-  _showMsg(String msg) {
+  _showMsg(String msg,Color color) {
     final snackbar = SnackBar(
+      backgroundColor:color,
       content: Text(msg),
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
@@ -67,7 +71,7 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
   String _writingStyle;
   String _prefferedLanguage;
   String _instructions;
-  String _email;
+
   String _token;
   bool _iswritingStyleSelected = false;
   bool _isprefferedLanguageSelected = false;
@@ -100,12 +104,8 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
         _topic = _topicController.text;
         _instructions = _instructionsController.text;
 
-        var now = new DateTime.now();
-        String date =
-            new DateFormat("dd-MM-yyyy hh:mm:ss").format(now).toString();
-
+     
         order = Order(
-            _email,
             _topic,
             _details.subjectType,
             _details.numberofPages,
@@ -115,11 +115,10 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
             _prefferedLanguage,
             _details.urgency,
             _details.spacingStyle,
-            total,
+              total,
             _instructions,
             "Pending payment",
-            "Pending",
-            date);
+            "Pending");
 
         String orderJson = jsonEncode(order);
 
@@ -139,16 +138,16 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
     var jsonResponse;
 
     try {
-      var apiUrl = '/neworder';
+      var apiUrl = "/user/"+_userid+"/orders";
 
       var response = await _network.submitData(orderJson, apiUrl, token);
-
+   
       if (response.statusCode == 201) {
-        jsonResponse = jsonDecode(response.body);
+        jsonResponse = jsonDecode(response.body)['data'];
 
      Myorder _myorder= Myorder(
-        jsonResponse['id'].toString(),
-       jsonResponse['email'],
+        jsonResponse['id'],
+ 
  jsonResponse['topic'],
  jsonResponse['subject'],
  jsonResponse['pages'],
@@ -164,7 +163,7 @@ class _OrderStateTwoState extends State<OrderStageTwo> {
       jsonResponse['status'],
  jsonResponse['payment'],
 jsonResponse['created_at'],
-  jsonResponse['updated_at'],
+
      );
 
 
@@ -172,7 +171,7 @@ jsonResponse['created_at'],
 
         //   _showMsg("Order submitted successfuly");
         //Load user orders after adding a new order
-    ScopedModel.of<UserModel>(context, rebuildOnChange: true).addNewOrderToPendingOrders(_myorder);
+    // ScopedModel.of<UserModel>(context, rebuildOnChange: true).addNewOrderToPendingOrders(_myorder);
 
       //  ScopedModel.of<UserModel>(context, rebuildOnChange: true)
            // .loadUserOrders();
@@ -185,20 +184,26 @@ jsonResponse['created_at'],
         });
 
         if (_checked == 'Yes') {
+
+
           Navigator.pushNamed(context, RouteNames.uploadMaterial,
               arguments: FinalOrderDetails(
-           jsonResponse['id'],
-                jsonResponse['email'],
+                  jsonResponse['id'],
+       
                 jsonResponse['subject'],
                 jsonResponse['document'],
                 jsonResponse['pages'],
                 jsonResponse['urgency'],
               ));
-        } else {
-          Navigator.pushNamed(context, RouteNames.paypal,
+        } 
+        
+        else {
+ScopedModel.of<UserModel>(context, rebuildOnChange: true).loadUserOrders();
+
+          Navigator.pushNamed(context, RouteNames.makepayments,
               arguments: FinalOrderDetails(
-      jsonResponse['id'],
-                jsonResponse['email'],
+                  jsonResponse['id'],
+         
                 jsonResponse['subject'],
                 jsonResponse['document'],
                 jsonResponse['pages'],
@@ -207,38 +212,38 @@ jsonResponse['created_at'],
         }
       } 
       else if (response.statusCode == 422) {
-        jsonResponse = jsonDecode(response.body);
-
-        //  print(jsonResponse);
+      
+   
 
         setState(() {
           _isLoading = false;
         });
 
-        _showMsg("Order Not submitted ");
+        _showMsg("Order Not submitted.Try again please:Error code 422",Colors.red);
       } 
       else if (response.statusCode == 401) {
         setState(() {
           _isLoading = false;
         });
 
-        _showMsg("Unauthenticated:Server not responding.");
-      } else {
+        _showMsg("Unauthenticated:Server not responding:Error code 401",Colors.red);
+      }
+       else {
         //   jsonResponse = jsonDecode(response.body);
         setState(() {
           _isLoading = false;
         });
-
-        _showMsg("Order Not submitted ");
+     
+   
+        _showMsg("Order Not submitted.We encountered Error Code "+response.statusCode.toString(),Colors.red);
       }
     } 
     catch (e) {
-      print("error is");
-       print(e);
+    
       setState(() {
         _isLoading = false;
       });
-      _showMsg("Server  error");
+      _showMsg("Server  error",Colors.red);
     }
   }
 
@@ -270,7 +275,7 @@ jsonResponse['created_at'],
     _focusNodeSubmitButton = FocusNode();
 
     _token = ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
-    _email = ScopedModel.of<UserModel>(context, rebuildOnChange: true).email;
+    _userid = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user.id.toString();
     _details = ModalRoute.of(context).settings.arguments;
     final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
     return Row(children: [
@@ -288,10 +293,12 @@ jsonResponse['created_at'],
                       child: Form(
                           key: _formKeyOrderStatetwo,
                           child: ListView(children: <Widget>[
-                            writingStyle(),
+                                    writingStyle(),
                             SizedBox(height: 12.0),
-                            prefferedLanguage(),
+                                prefferedLanguage(),
                             SizedBox(height: 12.0),
+                    
+                       
                             Container(
                                 decoration:
                                     BoxDecoration(color: Colors.grey[50]),
@@ -300,7 +307,7 @@ jsonResponse['created_at'],
                                       keyboardType: TextInputType.text,
                                       textInputAction: TextInputAction.next,
                                       focusNode: _focusNodeTopic,
-                                      autovalidate: true,
+                                      autovalidate: false,
                                       onFieldSubmitted: (term) {
                                         _fieldFocusChange(
                                             context,
@@ -330,11 +337,11 @@ jsonResponse['created_at'],
                                   child: TextFormField(
                                       textInputAction: TextInputAction.done,
                                       focusNode: _focusNodeInstructions,
-                                      autovalidate: true,
+                                      autovalidate: false,
                                       onFieldSubmitted: (term) {
                                         FocusScope.of(context).unfocus();
                                       },
-                                      minLines: 5,
+                                      minLines: 3,
                                       keyboardType: TextInputType.multiline,
                                       maxLines: null,
                                       controller: _instructionsController,
@@ -366,31 +373,27 @@ jsonResponse['created_at'],
 
 //===========Writing style method=============
   Widget writingStyle() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+    return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField(
             focusNode: _focusNodeWritingStyle,
-            autofocus: true,
+            autofocus:false,
             autovalidate: true,
+               iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey[50]))
                     ),
-            hint: Text('Writing style'),
-            value: _iswritingStyleSelected ? _writingStyle : null,
-            validator: (value) {
-              if (value == null) {
-                return "Please select writing style";
-              } else
-                return null;
-            },
+         
+
+
+
             isExpanded: true,
             items: <String>[
               'APA',
@@ -405,39 +408,51 @@ jsonResponse['created_at'],
             ].map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem(value: value, child: Text(value));
             }).toList(),
-            onChanged: (String value) {
+            onChanged: (value) {
               _fieldFocusChange(
                   context, _focusNodeWritingStyle, _focusNodePrefferedLanguage);
 
               setState(() {
-                _writingStyle = value;
                 _iswritingStyleSelected = true;
+                  _writingStyle = value;
               });
-            }));
+            }
+            ,
+                 
+hint:  Text('Select Writing style'),
+            value: _writingStyle,
+            validator: (value) =>
+                value == null ? 'Please select writing style' : null,
+
+            
+            )
+            
+            
+            
+            );
   }
 
   Widget prefferedLanguage() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+    return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField(
             focusNode: _focusNodePrefferedLanguage,
             autovalidate: true,
             isExpanded: true,
-            hint: Text("Preferred Language"),
-            iconSize: 40,
+            hint: Text("Select Preferred Language"),
+            iconSize: 10,
             validator: (value) {
               if (value == null) {
                 return "Please select preferred language";
               } else
                 return null;
             },
-            value: _isprefferedLanguageSelected ? _prefferedLanguage : null,
+            value:  _prefferedLanguage ,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(

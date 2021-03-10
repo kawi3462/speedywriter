@@ -42,25 +42,28 @@ class _ForgotState extends State<Forgot> {
     Random rnd = new Random();
     _pin = min + rnd.nextInt(max - min);
 
-    Map data = {'email': email, 'pin': _pin, 'status': 'live'};
-    var apiUrl = "/reset";
+    Map data = {'email': email, 'pin': _pin};
+    var apiUrl = "/user/sendpin";
 
-    var jsonResponse = null;
+ 
 
     try {
       String jsonData = jsonEncode(data);
 
       var response = await Network().resetPassword(jsonData, apiUrl);
 
-      if (response.statusCode == 201) {
-        jsonResponse = json.decode(response.body);
+      if (response.statusCode == 200) {
+      var   jsonResponse = json.decode(response.body);
         if (jsonResponse != null) {
           setState(() {
             _isLoading = false;
           });
         }
+
+  
+
         Navigator.pushNamed(context, RouteNames.resetpassword,
-            arguments: ResetDetails(email, _pin));
+            arguments: ResetDetails( jsonResponse['id'].toString(),email, _pin));
       } else if (response.statusCode == 404) {
         setState(() {
           _isLoading = false;

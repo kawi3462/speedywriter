@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:speedywriter/account/usermodel.dart';
 
 
 import 'package:speedywriter/common/page_titles.dart';
@@ -67,7 +69,7 @@ class _CardPaymentState extends State<CardPayment> {
         ModalRoute.of(context).settings.arguments;
  _id = _finalOrderDetails.id;
 
-  _email = _finalOrderDetails.email;
+  _email = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user.email;
  _subject = _finalOrderDetails.subject;
  _doc = _finalOrderDetails.document;
   _pages = _finalOrderDetails.pages;
@@ -110,7 +112,7 @@ class _CardPaymentState extends State<CardPayment> {
       encKey: "70f70e52c71340ff2f8e1eba",
       publicKey: "FLWPUBK-7b9cdc0e38fabc1aab76061c77ea0200-X",
       transactionRef: _id.toString(),
-      amount: 1.5,
+      amount:_totalCost,
       email: _email ,
       onSuccess: (response) {
         print("$response");

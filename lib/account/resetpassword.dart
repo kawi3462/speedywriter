@@ -26,6 +26,8 @@ class _ResetPasswordState extends State<ResetPassword> {
   final TextEditingController _passwordController = TextEditingController();
 
   final String title = "Lastminutessay";
+  String _userid;
+  
   String _email;
   bool _isLoading = false;
   bool _isResendCodeLoading = false;
@@ -36,9 +38,10 @@ class _ResetPasswordState extends State<ResetPassword> {
   bool _isEnabled = false;
   int _resendpin;
 
-  _showMsg(String msg) {
+  _showMsg(String msg,Color color) {
     final snackbar = SnackBar(
       content: Text(msg),
+      backgroundColor: color,
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
     _scaffoldkey.currentState.showSnackBar(snackbar);
@@ -88,141 +91,148 @@ class _ResetPasswordState extends State<ResetPassword> {
     Random rnd = new Random();
     _resendpin = min + rnd.nextInt(max - min);
 
-    Map data = {'email': _email, 'pin': _pin, 'status': 'live'};
-    var apiUrl = "/reset";
+    Map data = {'email': _email, 'pin': _pin};
+    var apiUrl = "/user/sendpin";
+ 
 
-    var jsonResponse = null;
+
 
     try {
       String jsonData = jsonEncode(data);
 
       var response = await Network().resetPassword(jsonData, apiUrl);
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         setState(() {
           _isResendCodeLoading = false;
         });
-        jsonResponse = json.decode(response.body);
-        _showMsg("Verification code has been sent to");
+       var jsonResponse = json.decode(response.body);
+        _showMsg("Verification code has been sent to your email",Colors.green);
       } else if (response.statusCode == 404) {
         setState(() {
           _isResendCodeLoading = false;
         });
 
-        _showMsg("Email not registered");
+        _showMsg("Email not registered",Colors.blue);
       } else if (response.statusCode == 500) {
         setState(() {
           _isResendCodeLoading = false;
         });
 
-        _showMsg("Server connection error");
+        _showMsg("Server connection error:500",Colors.red);
       } else {
         setState(() {
           _isResendCodeLoading = false;
         });
-        _showMsg("Error..Check internet connection or info your submitting");
+        _showMsg("Error code..Check internet connection or info your submitting",Colors.red);
       }
     } catch (e) {
       setState(() {
         _isResendCodeLoading = false;
       });
-      _showMsg("Cannot connect with the  server");
+      _showMsg("Cannot connect with the  server",Colors.red);
     }
   }
 
 //end resend code method
 
 //Method to check if the user is registered
-  void checkPassword(String email) async {
+  void checkPassword() async {
     setState(() {
       _isEnabled = false;
     });
 
     Map data = {
-      'email': email,
+      'password': _passwordController.text,
       'pin': _pin,
-      'password': _passwordController.text
     };
-    var apiUrl = "/validatepin";
+    var apiUrl = "/user/validatepin/"+_userid;
 
-    var jsonResponse = null;
+
 
     try {
       String jsonData = jsonEncode(data);
 
       var response = await Network().resetPassword(jsonData, apiUrl);
 
-      if (response.statusCode == 201) {
-        jsonResponse = json.decode(response.body);
-        if (jsonResponse != null) {
+      if (response.statusCode == 200 ){
+
+       
+    //  var   jsonResponse = json.decode(response.body);
+    //     if (jsonResponse != null) {
+
           SharedPreferences sharedPreferences =
               await SharedPreferences.getInstance();
-          Map data = {'email': email, 'password': _passwordController.text};
-          var apiUrl = "/login";
+          Map data = {'email': _email, 'password': _passwordController.text};
+     
 
-          var jsResponse = null;
+   
 
           String jsonData = jsonEncode(data);
 
-          var res = await Network().loginData(jsonData, apiUrl);
+          var res = await Network().loginData(jsonData);
 
           if (res.statusCode == 200) {
-            jsResponse = json.decode(res.body);
+          var  jsResponse = json.decode(res.body)['data'];
             if (jsResponse != null) {
-              sharedPreferences.setString("token", jsResponse['access_token']);
-              sharedPreferences.setString('email', email);
+              sharedPreferences.setString("token", jsResponse['api_token']);
+              sharedPreferences.setString('email', _email);
+               sharedPreferences.setString('userid', jsResponse['id'].toString());
+              
 
-              setState(() {
-                _isLoading = false;
-              });
-            }
-            _showMsg("Password reset successfully");
+          
 
-            var apiUrl = "/user";
+            var apiUrl ="/user/"+jsResponse['id'].toString();
+          
 
             var userdetailsresponse = await Network()
-                .getUserData(apiUrl, jsonResponse['access_token']);
+                .getUserData(apiUrl, jsResponse['api_token']);
 
-            Map userMap = jsonDecode(userdetailsresponse.body);
+            Map userMap = jsonDecode(userdetailsresponse.body)['data'];
             ScopedModel.of<UserModel>(context, rebuildOnChange: true)
                 .addUserDetails(userMap);
             ScopedModel.of<UserModel>(context, rebuildOnChange: true)
                 .setUserStatus(true);
+           ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+         .setTokenAndUserEmail(jsResponse['api_token'], _email,jsResponse['id'].toString());
+    setState(() {
+                _isLoading = false;
+              });
+            }
+            _showMsg("Password reset successfully",Colors.green);
 
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                .setTokenAndUserEmail(jsonResponse['access_token'], email);
           }
 
           Navigator.pushNamed(context,RouteNames.home);
-        }
+        // }
       } 
       else if (response.statusCode == 404) {
         setState(() {
           _isEnabled = true;
           _isLoading = false;
         });
-        _showMsg("Pin code not found");
+        _showMsg("Pin code not found",Colors.blue);
       } else if (response.statusCode == 500) {
         setState(() {
           _isEnabled = true;
           _isLoading = false;
         });
 
-        _showMsg("Server connection error");
+        _showMsg("Server connection error",Colors.red);
       } else {
-        _showMsg("Error..Check internet connection or info your submitting");
+        _showMsg("Error..Check internet connection or info your submitting",Colors.red);
         setState(() {
           _isLoading = false;
           _isEnabled = true;
         });
       }
     } catch (e) {
-      print(e);
+  
       setState(() {
         _isLoading = false;
         _isEnabled = true;
       });
-      _showMsg("Cannot connect with the  server");
+      _showMsg("Cannot connect with the  server",Colors.red);
     }
   }
 
@@ -240,7 +250,8 @@ class _ResetPasswordState extends State<ResetPassword> {
       _pin = _resetDetails.pin;
     }
 
-    _email = _resetDetails.email;
+    _userid = _resetDetails.userid;
+    _email=_resetDetails.email;
 
     return Scaffold(
       key: _scaffoldkey,
@@ -295,7 +306,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                                   return null;
                               },
                               onSaved: (String value) {
-                                _pin = int.parse(value);
+                                _pin =value.length>1? int.parse(value):null;
                               },
                               decoration: InputDecoration(
                                   prefixIcon: new Padding(
@@ -410,7 +421,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                                             if (_passwordController.text ==
                                                 _confirmpasswordController
                                                     .text) {
-                                              checkPassword(_email);
+                                            checkPassword();
 
                                               setState(() {
                                                 _isLoading = true;
@@ -420,7 +431,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                                                 _isLoading = false;
                                               });
                                               _showMsg(
-                                                  "Password and Confirm password dont match !.");
+                                                  "Password and Confirm password dont match !.",Colors.redAccent);
                                             }
                                           }
                                         }

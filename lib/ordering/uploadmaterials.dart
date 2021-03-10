@@ -23,6 +23,9 @@ import 'package:speedywriter/common/drawer.dart';
 import 'dart:convert';
 import 'package:speedywriter/serializablemodelclasses/ordermaterial.dart';
 
+import 'package:intl/intl.dart'; // for date format
+import 'package:intl/date_symbol_data_local.dart'; 
+
 class UploadMaterial extends StatefulWidget {
   static const routeName = '/ordermaterials';
 
@@ -42,8 +45,8 @@ class _UploadMaterialState extends State<UploadMaterial> {
   // bool _multiPick = false;
   // FileType _pickingType = FileType.custom;
   int _orderid;
-  String _url = Network().url + '/uploadmaterials';
-  // TextEditingController _controller = new TextEditingController();
+
+
 
   String _fileName;
   List<PlatformFile> _paths;
@@ -52,15 +55,41 @@ class _UploadMaterialState extends State<UploadMaterial> {
   bool _loadingPath = false;
   bool _multiPick = false;
   FileType _pickingType = FileType.any;
-  TextEditingController _controller = TextEditingController();
+
 
   final GlobalKey<ScaffoldState> _uploadScaffoldState = new GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    // _controller.addListener(() => _extension = _controller.text);
+
   }
+  @override
+  void dispose(){
+
+super.dispose();
+
+  }
+
+  void _clearCachedFiles() {
+    FilePicker.platform.clearTemporaryFiles().then((result) {
+      _uploadScaffoldState.currentState.showSnackBar(
+        SnackBar(
+          backgroundColor: result ? Colors.green : Colors.red,
+          content: Text((result
+              ? 'Temporary files removed with success.'
+              : 'Failed to clean temporary files')),
+        ),
+      );
+    });
+  }
+
+  void _selectFolder() {
+    FilePicker.platform.getDirectoryPath().then((value) {
+      setState(() => _directoryPath = value);
+    });
+  }
+
 
   _showMsg(String msg) {
     final snackbar = SnackBar(
@@ -89,48 +118,47 @@ class _UploadMaterialState extends State<UploadMaterial> {
       for (int i = 0; i < _paths.length; i++) {
         PlatformFile file = _paths.elementAt(i);
 
-        String fileName = file.path.split('/').last;
-        print("File name is=================");
-        print(fileName);
-        print(file.path);
+      //  String fileName = file.path.split('/').last;
+       String _url = Network().url + "/order/"+_orderid.toString()+"/images";
 
 
           var postUri = Uri.parse(_url);
           // print(file.path);
           //  print(postUri);
+
+var headers = {
+  'Accept': 'application/json',
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer $_token',
+};
+
           var request = http.MultipartRequest("POST", postUri);
-          request.headers['authorization'] = "Bearer $_token";
-          request.headers['Content-Type'] = "multipart/form-data";
-          request.fields['order_id'] = _orderid.toString();
-          request.fields['email'] = _email;
+          // request.headers['authorization'] = "Bearer $_token";
+          // request.headers['Content-Type'] = "multipart/form-data";
+    
 
           request.files.add(
             await http.MultipartFile.fromPath(
-              'data',
+              'materials[]',
               file.path,
-              filename: path.basename(file.path),
+
             ),
 
             
           );
 
-          var res = await request.send();
-          if (res.statusCode == 201) {
+          request.headers.addAll(headers);
+
+
+http.StreamedResponse  res = await request.send();
+          // var res = await request.send();
+          if (res.statusCode == 200) {
             setState(() {
               _loadingPath = true;
             });
   
 
-            // listen for response
-            res.stream.transform(utf8.decoder).listen((value) {
-              Map _material = json.decode(value);
-              print(value);
-              print(_material);
-              print(_material['order_id']);
-              Ordermaterial _ordermaterial = Ordermaterial.fromJson(_material);
-              ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                  .addOrderMaterial(_ordermaterial);
-            });
+            
 
 
             int x = i + 1;
@@ -138,16 +166,27 @@ class _UploadMaterialState extends State<UploadMaterial> {
               setState(() {
                 _loadingPath = false;
               });
+
+           
+           ScopedModel.of<UserModel>(context, rebuildOnChange: true).loadUserOrders();
+
+          
+             _clearCachedFiles();
               _showMsg('Reference files uploaded successfully');
             }
           } 
           
           else {
+
+
+
+
             setState(() {
               _loadingPath = false;
             });
             int x = i + 1;
             if (x == _paths.length) {
+                  _clearCachedFiles();
               _showMsg('Reference Files  not uploaded.Try again');
             }
           }
@@ -172,24 +211,7 @@ class _UploadMaterialState extends State<UploadMaterial> {
     });
   }
 
-  void _clearCachedFiles() {
-    FilePicker.platform.clearTemporaryFiles().then((result) {
-      _uploadScaffoldState.currentState.showSnackBar(
-        SnackBar(
-          backgroundColor: result ? Colors.green : Colors.red,
-          content: Text((result
-              ? 'Temporary files removed with success.'
-              : 'Failed to clean temporary files')),
-        ),
-      );
-    });
-  }
 
-  void _selectFolder() {
-    FilePicker.platform.getDirectoryPath().then((value) {
-      setState(() => _directoryPath = value);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -260,10 +282,10 @@ class _UploadMaterialState extends State<UploadMaterial> {
                                     ? null
                                     : () {
                                         Navigator.pushNamed(
-                                            context, RouteNames.paypal,
+                                            context,RouteNames.makepayments,
                                             arguments: FinalOrderDetails(
                                               _finalOrderDetails.id,
-                                              _finalOrderDetails.email,
+                                  
                                               _finalOrderDetails.subject,
                                               _finalOrderDetails.document,
                                               _finalOrderDetails.pages,
@@ -314,7 +336,7 @@ class _UploadMaterialState extends State<UploadMaterial> {
                                           final bool isMultiPath =
                                               _paths != null &&
                                                   _paths.isNotEmpty;
-                                          final String name = 'File $index: ' +
+                                          final String name = 'File '+(index+1  ).toString() +
                                               (isMultiPath
                                                   ? _paths
                                                       .map((e) => e.name)

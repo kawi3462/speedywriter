@@ -4,6 +4,13 @@ import 'package:speedywriter/common/drawer.dart';
 import 'package:speedywriter/presentation/custom_icons.dart';
 import 'package:speedywriter/common/floatingbottombutton.dart';
 import 'package:speedywriter/common/routenames.dart';
+import 'package:speedywriter/common/contactsbottomsheet.dart';
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+
+import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// A responsive scaffold for our application.
 /// Displays the navigation drawer alongside the [Scaffold] if the screen/window size is large enough
@@ -11,7 +18,7 @@ import 'package:speedywriter/common/routenames.dart';
 ///
 class AppScaffoldTwo extends StatefulWidget {
   const AppScaffoldTwo(
-      { this.index,@required this.body,  @required this.pageTitle, Key key})
+      {this.index, @required this.body, @required this.pageTitle, Key key})
       : super(key: key);
 
   final Widget body;
@@ -32,7 +39,7 @@ class _AppScaffoldTwoState extends State<AppScaffoldTwo> {
   @override
   void initState() {
     index = widget.index;
-    if (index!= null) {
+    if (index != null) {
       _isIndex = true;
     }
     // TODO: implement initState
@@ -44,6 +51,20 @@ class _AppScaffoldTwoState extends State<AppScaffoldTwo> {
       _lastSelected = 'TAB: $index';
       if (index == 0) {
         Navigator.pushNamed(context, RouteNames.getquote);
+      } else if (index == 3) {
+        Navigator.pushNamed(context, RouteNames.chatAdmin);
+      } else if (index == 2) {
+        showModalBottomSheet(
+            isDismissible: true,
+            useRootNavigator: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10))),
+            context: context,
+            builder: (BuildContext context) {
+              return  ContactsBottomSheetState();
+            });
       }
     });
   }
@@ -99,3 +120,4 @@ class _AppScaffoldTwoState extends State<AppScaffoldTwo> {
     );
   }
 }
+

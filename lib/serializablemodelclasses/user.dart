@@ -1,31 +1,34 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:speedywriter/serializablemodelclasses/image.dart';
 
 part 'user.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class User {
   User(
     this.id,
     this.name,
-    this.phone,
-    this.email,
     this.country,
-    this.avatar_url,
-    this.referral_points,
+    this.phone_number,
+    this.email,
+    this.api_token,
     this.created_at,
     this.updated_at,
+    this.image,
   );
 
   int id;
   String name;
-  String phone;
-  String email;
   String country;
-  String avatar_url;
-  String referral_points;
+  String phone_number;
+  String email;
+  String api_token;
   String created_at;
   String updated_at;
+  Image image;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
   Map<String, dynamic> toJson() => _$UserToJson(this);
 }
+
+

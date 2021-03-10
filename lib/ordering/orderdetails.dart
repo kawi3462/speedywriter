@@ -10,6 +10,12 @@ class OrderDetails {
 
   final String spacingStyle;
 
-  OrderDetails(this.documentType,this.subjectType, this.numberofPages,
-      this.academicLevel, this.urgency, this.spacingStyle);
+  OrderDetails(
+    this.documentType,
+    this.subjectType, 
+    this.numberofPages,
+      this.academicLevel,
+       this.urgency, 
+       this.spacingStyle
+       );
 }

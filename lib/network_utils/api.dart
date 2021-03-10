@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 class Network {
   String token;
   String email;
+  String id;
 
 
  //final String _url = "https://speedy-273302.uc.r.appspot.com/api/v1";
@@ -18,13 +20,66 @@ class Network {
  final String url="https://lastminutessay.us/api/v1";
  final String _url="https://lastminutessay.us/api/v1";
 
+//Load user profile image if logged in with image
+
+getUserAvatar(String userid,String imageId) async{
+
+var headers=_setHeadersOrder(token);
+var request = http.Request('GET', Uri.parse("https://lastminutessay.us/api/v1/user/"+userid+"/image/"+imageId));
+
+//_url+"/user/"+userid+"/image/"+imageId
+
+request.headers.addAll(headers);
+
+http.StreamedResponse response = await request.send();
+
+if (response.statusCode == 200) {
+//return Image.memory(response.toBy);
+
+//response.stream.bytesToString();
+}
+else {
+return response.reasonPhrase;
+}
+
+
+
+
+}
+
+
+//End loading image 
+
+//=====================login method=====================
+        loginData(data) async {
+              var apiUrl = "/login";
+    var fullUrl = _url + apiUrl;
+    return await http.post(fullUrl, body: data, headers:_setSignupHeaders());
+  }
+//====================================================
+//===============Sign up method=====================
+
+  signUpData(data) async {
+      var apiUrl = "/user";
+    var fullUrl = _url + apiUrl;
+    return await http.post(fullUrl, body: data, headers:_setSignupHeaders());
+  }
+//====================================================
+
+
+
+
+
+ 
+
   _getTokenEmail() async {
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     token = localStorage.getString('token') ?? '';
     email = localStorage.getString('email') ?? '';
   }
 
-  authData(data, apiUrl) async {
+  authData(data) async {
+           var apiUrl = "/login";
     var fullUrl = _url + apiUrl;
     return await http.post(fullUrl, body: data, headers: _setHeaders());
   }
@@ -40,18 +95,23 @@ class Network {
 //Delete data
 deleteData(apiUrl,token) async
 {
- var fullUrl = _url + apiUrl;
+ var fullUrl = _url+apiUrl;
     return await http.delete(fullUrl, headers: _setHeadersOrder(token));
 
 }
+updateData(apiUrl, token)  async
+{
+ var fullUrl = _url+apiUrl;
+    return await http.put(fullUrl, headers: _setHeadersOrder(token));
 
+}
 
 //End deleteting data
 
-deleteOrderFiles(apiUrl,token,String data) async
+deleteOrderFiles(apiUrl,token) async
 {
  var fullUrl = _url + apiUrl;
-    return await http.post(fullUrl, body:data, headers: _setHeadersOrder(token));
+    return await http.post(fullUrl, headers: _setHeadersOrder(token));
 
 }
 
@@ -71,13 +131,7 @@ deleteOrderFiles(apiUrl,token,String data) async
         'Authorization': 'Bearer $token'
       };
 
-      //login method
-        loginData(data, apiUrl) async {
-    var fullUrl = _url + apiUrl;
-    return await http.post(fullUrl, body: data, headers:_setSignupHeaders());
-  }
-
-//====================================================
+  
  resetPassword(data, apiUrl) async {
     var fullUrl = _url + apiUrl;
     return await http.post(fullUrl, body: data, headers:_setSignupHeaders());
@@ -85,12 +139,7 @@ deleteOrderFiles(apiUrl,token,String data) async
 
 
 
-//===============Sign up method
 
-  signUpData(data, apiUrl) async {
-    var fullUrl = _url + apiUrl;
-    return await http.post(fullUrl, body: data, headers:_setSignupHeaders());
-  }
 //Sign up headers
   _setSignupHeaders() => {
       'Content-type': 'application/json',
@@ -124,6 +173,15 @@ await localStorage.remove('token');
 
 
   }
+
+ 
+   getUserID() async{
+      SharedPreferences localStorage = await SharedPreferences.getInstance();
+       return localStorage.getString('userid');
+
+
+ }
+
 
 
   getEmail() async{

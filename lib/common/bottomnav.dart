@@ -64,7 +64,7 @@ class FABBottomAppBarState extends State<FABBottomAppBar> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: items,
       ),
-      color:speedyPurple100, //Color(0xFFFBF0F1)
+      color: speedyPurple100, //Color(0xFFFBF0F1)
     );
   }
 
@@ -117,3 +117,4 @@ class FABBottomAppBarState extends State<FABBottomAppBar> {
     );
   }
 }
+

@@ -10,7 +10,7 @@ import 'package:speedywriter/ordering/finalorderdetails.dart';
 
 
 import 'package:speedywriter/common/routenames.dart';
-import 'package:speedywriter/common/appbar.dart';
+
 import 'package:speedywriter/common/colors.dart';
 
 import 'package:flutter_rave/flutter_rave.dart';
@@ -68,7 +68,7 @@ _scaffoldKey.currentState.showSnackBar(snackbar);
 
         _id = _finalOrderDetails.id;
 
-  _email = _finalOrderDetails.email;
+  _email = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user.email;
  _subject = _finalOrderDetails.subject;
  _doc = _finalOrderDetails.document;
   _pages = _finalOrderDetails.pages;
@@ -207,7 +207,7 @@ Text('Pay with Paypal,Card Or request Paypal Invoice',  style:
                                     context, RouteNames.paypal,
                                       arguments: FinalOrderDetails(
                                         _id,
-                                       _email,
+                              
                                         _subject,
                                         _doc,
                                         _pages,
@@ -303,7 +303,7 @@ Text('Pay with Paypal,Card Or request Paypal Invoice',  style:
                                     context, RouteNames.paypal,
                                       arguments: FinalOrderDetails(
                                         _id,
-                                       _email,
+                            
                                         _subject,
                                         _doc,
                                         _pages,
@@ -339,14 +339,15 @@ Text('Pay with Paypal,Card Or request Paypal Invoice',  style:
 _pay(BuildContext context) {
 
 
-
+//ScopedModel.of<UserModel>(context, rebuildOnChange: true).enckey,
+//ScopedModel.of<UserModel>(context, rebuildOnChange: true).publickey,
   
     final _rave = RaveCardPayment(
       isDemo: false,
-      encKey: ScopedModel.of<UserModel>(context, rebuildOnChange: true).enckey,
-      publicKey: ScopedModel.of<UserModel>(context, rebuildOnChange: true).publickey,
+         encKey: "70f70e52c71340ff2f8e1eba",
+      publicKey: "FLWPUBK-7b9cdc0e38fabc1aab76061c77ea0200-X",
       transactionRef: _id.toString(),
-      amount: 1.12,
+      amount: _totalCost,
       email: _email ,
       onSuccess: (response) {
         //update order payment 

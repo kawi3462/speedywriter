@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speedywriter/appscaffold.dart';
 import 'package:speedywriter/appscaffold_two.dart';
+import 'package:speedywriter/common/cutcornerborders.dart';
 import 'package:speedywriter/common/drawer.dart';
 import 'package:speedywriter/common/page_titles.dart';
 import 'package:speedywriter/ordering/orderingstagetwo.dart';
@@ -14,6 +15,7 @@ import 'package:scoped_model/scoped_model.dart';
 import 'package:speedywriter/ordering/orderdetails.dart';
 import 'package:speedywriter/common/routenames.dart';
 import 'common/colors.dart';
+
 
 class MyHomePage extends StatefulWidget {
   MyHomePage(
@@ -31,6 +33,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+    final CutCornersBorder cutcornersborder=new CutCornersBorder();
   String _lastSelected = 'TAB: 0';
 
   void _selectedTab(int index) {
@@ -172,20 +175,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget subjectArea() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return    InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
             autofocus: true,
-            autovalidate: true,
+            autovalidate: false,
             focusNode: _focusNodeSubject,
             focusColor: speedyPurple400,
-            iconSize: 40,
+            iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -227,19 +229,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget typeOfDocument() {
     return ScopedModelDescendant<OrderModel>(builder: (context, model, child) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+      return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField<String>(
             focusNode: _focusNodeDocument,
             focusColor: speedyPurple400,
-                     autovalidate: true,
-            iconSize: 40,
+                     autovalidate: false,
+            iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -287,19 +288,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget numberOfPages() {
     return ScopedModelDescendant<OrderModel>(builder: (context, child, model) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+      return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField<String>(
             focusNode: _focusNodepPages,
-                     autovalidate: true,
+                     autovalidate: false,
             focusColor: speedyPurple400,
-            iconSize: 40,
+            iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -343,19 +343,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget urgency() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
               focusNode: _focusNodeDeadline,
-                       autovalidate: true,
+                       autovalidate: false,
               focusColor: speedyPurple400,
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(
@@ -398,19 +397,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget acedemicLevel() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
               focusNode: _focusNodeAcademicleve,
-                       autovalidate: true,
+                       autovalidate: false,
               focusColor: speedyPurple400,
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(
@@ -453,19 +451,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget spacingStyle() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
               focusNode: _focusNodeSpacing,
-                       autovalidate: true,
+                       autovalidate: false,
               focusColor: speedyPurple400,
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(

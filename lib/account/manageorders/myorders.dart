@@ -1,10 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:speedywriter/account/manageorders/editorderdetails.dart';
-
-import 'package:speedywriter/appscaffoldforTabs.dart';
 
 import 'package:speedywriter/common/page_titles.dart';
 import 'package:speedywriter/common/routenames.dart';
@@ -21,13 +18,15 @@ import 'package:speedywriter/network_utils/api.dart';
 import 'package:flutter/gestures.dart';
 import 'package:speedywriter/common/colors.dart';
 
-import 'package:speedywriter/serializablemodelclasses/ordermaterial.dart';
+import 'package:speedywriter/common/drawer.dart';
+import 'package:speedywriter/presentation/custom_icons.dart';
 
 class MyOrders extends StatefulWidget {
   _MyOrdersState createState() => _MyOrdersState();
 }
 
 class _MyOrdersState extends State<MyOrders> {
+  final GlobalKey<ScaffoldState> _scaffoldState = new GlobalKey();
 //Orders
   Myorder _myorder;
   List<Myorder> _pending;
@@ -36,44 +35,74 @@ class _MyOrdersState extends State<MyOrders> {
   List<Myorder> _revision;
   List<Myorder> _completed;
   bool _isDeleting = false;
+  bool _isSending = false;
   bool _isTablet = false;
   bool orderHasFiles;
-  List<Ordermaterial> _ordermaterial;
 
-  List<Ordermaterial> oneOrdermaterial = new List<Ordermaterial>();
   String _token;
-
+  String _userid;
   //Start adding bottom nav==========
-  String _lastSelected = 'TAB: 0';
 
-  void _selectedTab(int index) {
-    setState(() {
-      _lastSelected = 'TAB: $index';
-      if (index == 0) {
-        Navigator.pushNamed(context, '/getquote');
-      }
-    });
-  }
-
-  _showMsg(String msg) {
-    final snackbar = SnackBar(
-      content: Text(msg),
-      action: SnackBarAction(label: 'Close', onPressed: () {}),
-    );
-    Scaffold.of(context).showSnackBar(snackbar);
-  }
-
-  void _selectedFab(int index) {
-    setState(() {
-      _lastSelected = 'FAB: $index';
-    });
-  }
+  int index;
 
   @override
   void initState() {
     // TODO: implement initState
-
     super.initState();
+  }
+
+//Download completed paper
+
+  void _downLoadCompletedPaper(String id) async {
+    var apiUrl = "/order/" + id + "/download";
+    try {
+      var _response = await Network().getUserData(apiUrl, _token);
+
+      //   Map _responseMap = jsonDecode(_response.body);
+      if (_response.statusCode == 200) {
+        setState(() {
+          _isSending = false;
+        });
+        _showMsg(
+            "Your Order has been sent to your Email Address.Go see the attached files.",
+            Colors.green);
+      }
+
+     else  if (_response.statusCode == 404) {
+        setState(() {
+          _isSending = false;
+        });
+
+         _showMsg(
+            "Order files not found.Chat Admin.",
+            Colors.red);
+      
+      }
+       else {
+        setState(() {
+          _isSending = false;
+        });
+        _showMsg(
+            "Error Occured while retrieving your order files.Try again please.",
+            Colors.red);
+      }
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+      });
+      print(e);
+    }
+  }
+
+//End download completed paper
+
+  _showMsg(String msg, Color color) {
+    final snackbar = SnackBar(
+      backgroundColor: color,
+      content: Text(msg),
+      action: SnackBarAction(label: 'Close', onPressed: () {}),
+    );
+    _scaffoldState.currentState.showSnackBar(snackbar);
   }
 
   @override
@@ -89,11 +118,15 @@ class _MyOrdersState extends State<MyOrders> {
         _isTablet = true;
       }
     });
+
+    final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
     ScopedModel.of<UserModel>(context, rebuildOnChange: true).loadUserOrders();
     orderHasFiles =
         ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles;
 
     _token = ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
+    _userid = ScopedModel.of<UserModel>(context, rebuildOnChange: true).userid;
+
     ScopedModel.of<UserModel>(context, rebuildOnChange: true).loadUserOrders();
     _pending =
         ScopedModel.of<UserModel>(context, rebuildOnChange: true).pendingOrders;
@@ -106,27 +139,73 @@ class _MyOrdersState extends State<MyOrders> {
         .revisionOrders;
     _completed = ScopedModel.of<UserModel>(context, rebuildOnChange: true)
         .completedOrders;
-    _ordermaterial = ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-        .ordermaterials;
+    // _ordermaterial = ScopedModel.of<UserModel>(context, rebuildOnChange: true).ordermaterials;
 
-    return AppScaffoldHomeTabs(
-      tabBar: TabBar(
-        tabs: [
-          Tab(text: "Pending ", icon: Icon(Icons.warning)),
-          Tab(text: "In Progress ", icon: Icon(Icons.autorenew)),
-          Tab(text: "Revision ", icon: Icon(Icons.assignment_returned)),
-          Tab(text: "Completed", icon: Icon(Icons.assignment_turned_in)),
-        ],
-      ),
-      tabBarView: TabBarView(children: [
-        pendingOrders(),
-        progressOrders(),
-        revisionOrders(),
-        completedOrders(),
-      ]),
-      pageTitle: PageTitles.myorders,
+    return Row(
+      children: [
+        if (!displayMobileLayout)
+          const SimpleDrawer(
+            permanentlyDisplay: true,
+          ),
+        Expanded(
+            child: DefaultTabController(
+          length: 4,
+          child: Scaffold(
+            key: _scaffoldState,
+            backgroundColor: Color(0xFFFAF0E6),
+            appBar: AppBar(
+              bottom: TabBar(
+                tabs: [
+                  Tab(text: "Pending ", icon: Icon(Icons.warning)),
+                  Tab(text: "In Progress ", icon: Icon(Icons.autorenew)),
+                  Tab(text: "Revision ", icon: Icon(Icons.assignment_returned)),
+                  Tab(
+                      text: "Completed",
+                      icon: Icon(Icons.assignment_turned_in)),
+                ],
+              ),
+
+              // when the app isn't displaying the mobile version of app, hide the menu button that is used to open the navigation drawer
+              automaticallyImplyLeading: displayMobileLayout,
+              title: Text(
+                PageTitles.myorders,
+              ),
+            ),
+            drawer: displayMobileLayout
+                ? const SimpleDrawer(
+                    permanentlyDisplay: false,
+                  )
+                : null,
+            body: TabBarView(children: [
+              pendingOrders(),
+              progressOrders(),
+              revisionOrders(),
+              completedOrders(),
+            ]),
+          ),
+        ))
+      ],
     );
   }
+
+//Confirm order deletion first
+
+  _showUserStatusDialog(Myorder _myorder) {
+    return AwesomeDialog(
+      context: context,
+      dialogType: DialogType.WARNING,
+      animType: AnimType.BOTTOMSLIDE,
+      title: "Confirm deletion of Order #" + _myorder.id.toString(),
+      desc:
+          "Your about to delete order this order.Kindly confirm.Click OK to delete or Cancel to stop deletion ",
+      btnCancelOnPress: () {},
+      btnOkOnPress: () {
+        _deleteOrder(_myorder);
+      },
+    )..show();
+  }
+
+//End order deletion  confirmation
 
 //Delete order method
   void _deleteOrder(Myorder _myorder) async {
@@ -134,27 +213,39 @@ class _MyOrdersState extends State<MyOrders> {
       _isDeleting = true;
     });
 
-    String _apiUrl = "/deleteorder/" + _myorder.id;
+    Navigator.of(context, rootNavigator: true).pop(context);
+
+    String _apiUrl = "/user/" + _userid + "/orders/" + _myorder.id.toString();
 
     try {
       var _response = await Network().deleteData(_apiUrl, _token);
 
-      Navigator.pop(context);
       if (_response.statusCode == 200) {
         setState(() {
           _pending.remove(_myorder);
           _isDeleting = false;
         });
       } else if (_response.statusCode == 404) {
-        // ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-        //  .pendingOrders
-        //  .remove(_myorder.id);
+        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+            .pendingOrders
+            .remove(_myorder.id);
         setState(() {
           _pending.remove(_myorder);
           _isDeleting = false;
         });
+      } else if (_response.statusCode == 403) {
+        setState(() {
+          _isDeleting = false;
+        });
+
+        _showMsg("This action is unauthorized.You cannot delete the order",
+            Colors.red);
       } else {
+        setState(() {
+          _isDeleting = false;
+        });
         print(_response.statusCode.toString());
+        print(_response.body.toString());
       }
     } catch (e) {
       setState(() {
@@ -170,19 +261,13 @@ class _MyOrdersState extends State<MyOrders> {
 //Start view for completed orders
 
   completedOrdersView(Myorder _myorder) {
-    oneOrdermaterial.clear();
-    _ordermaterial.forEach((_file) {
-      if (_file.order_id == _myorder.id) {
-        oneOrdermaterial.add(_file);
-      }
-    });
+    bool _orderHasFiles = false;
+    if (_myorder.materials.length > 0) {
+      _orderHasFiles = true;
+      print(_myorder.materials);
 
-    if (oneOrdermaterial.length == 0) {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          false;
-    } else {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          true;
+      ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+          .addOrderMaterials(_myorder.materials);
     }
 
     return AwesomeDialog(
@@ -202,7 +287,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.id,
+                Text(_myorder.id.toString(),
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
@@ -281,7 +366,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.style),
+                Text(_myorder.academiclevel),
               ],
             ),
             Row(
@@ -334,16 +419,6 @@ class _MyOrdersState extends State<MyOrders> {
                 Text(_myorder.created_at),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Last Update:",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black)),
-                SizedBox(width: 10),
-                Text(_myorder.updated_at),
-              ],
-            ),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text("Topic:",
                   style: TextStyle(
@@ -391,8 +466,7 @@ class _MyOrdersState extends State<MyOrders> {
                         fontWeight: FontWeight.w800, color: Colors.black)),
               ],
             ),
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                    .orderHasFiles
+            _orderHasFiles
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -411,9 +485,9 @@ class _MyOrdersState extends State<MyOrders> {
                                     context: context,
                                     builder: (BuildContext context) {
                                       return ViewOrderFilesBottomSheet(
-                                          ordermaterial: oneOrdermaterial,
-                                          token: _token,
-                                          ordernumber: _myorder.id.toString());
+                                        myorder: _myorder,
+                                        token: _token,
+                                      );
                                     });
                               },
                             style: TextStyle(
@@ -446,19 +520,13 @@ class _MyOrdersState extends State<MyOrders> {
 //Start view for .in progress revision and completed orders
 
   progressRevisionOrdersView(Myorder _myorder) {
-    oneOrdermaterial.clear();
-    _ordermaterial.forEach((_file) {
-      if (_file.order_id == _myorder.id) {
-        oneOrdermaterial.add(_file);
-      }
-    });
+    bool _orderHasFiles = false;
+    if (_myorder.materials.length > 0) {
+      _orderHasFiles = true;
+      print(_myorder.materials);
 
-    if (oneOrdermaterial.length == 0) {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          false;
-    } else {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          true;
+      ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+          .addOrderMaterials(_myorder.materials);
     }
 
     return AwesomeDialog(
@@ -478,7 +546,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.id,
+                Text(_myorder.id.toString(),
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
@@ -557,7 +625,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.style),
+                Text(_myorder.academiclevel),
               ],
             ),
             Row(
@@ -617,7 +685,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.updated_at),
+                Text(_myorder.created_at),
               ],
             ),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -667,8 +735,7 @@ class _MyOrdersState extends State<MyOrders> {
                         fontWeight: FontWeight.w800, color: Colors.black)),
               ],
             ),
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                    .orderHasFiles
+            _orderHasFiles
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -687,9 +754,9 @@ class _MyOrdersState extends State<MyOrders> {
                                     context: context,
                                     builder: (BuildContext context) {
                                       return ViewOrderFilesBottomSheet(
-                                          ordermaterial: oneOrdermaterial,
-                                          token: _token,
-                                          ordernumber: _myorder.id.toString());
+                                        myorder: _myorder,
+                                        token: _token,
+                                      );
                                     });
                               },
                             style: TextStyle(
@@ -720,14 +787,14 @@ class _MyOrdersState extends State<MyOrders> {
                     borderRadius: BorderRadius.circular(30.0),
                     child: MaterialButton(
                       onPressed: () {
+                        Navigator.of(context, rootNavigator: true).pop(context);
                         ScopedModel.of<OrderModel>(context,
                                 rebuildOnChange: true)
                             .setTotalCost(double.parse(_myorder.total));
 
                         Navigator.pushNamed(context, RouteNames.uploadMaterial,
                             arguments: FinalOrderDetails(
-                              int.parse(_myorder.id),
-                              _myorder.email,
+                              int.parse(_myorder.id.toString()),
                               _myorder.subject,
                               _myorder.document,
                               _myorder.pages,
@@ -751,19 +818,12 @@ class _MyOrdersState extends State<MyOrders> {
 //End view for progress...in revision and completed orders
 
   pendingOrdersView(Myorder _myorder) {
-    oneOrdermaterial.clear();
-    _ordermaterial.forEach((_file) {
-      if (_file.order_id == _myorder.id) {
-        oneOrdermaterial.add(_file);
-      }
-    });
+    bool _orderHasFiles = false;
+    if (_myorder.materials.length > 0) {
+      _orderHasFiles = true;
 
-    if (oneOrdermaterial.length == 0) {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          false;
-    } else {
-      ScopedModel.of<UserModel>(context, rebuildOnChange: true).orderHasFiles =
-          true;
+      ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+          .addOrderMaterials(_myorder.materials);
     }
 
     return AwesomeDialog(
@@ -783,7 +843,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.id,
+                Text(_myorder.id.toString(),
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
@@ -862,7 +922,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.style),
+                Text(_myorder.academiclevel),
               ],
             ),
             Row(
@@ -922,7 +982,7 @@ class _MyOrdersState extends State<MyOrders> {
                     style: TextStyle(
                         fontWeight: FontWeight.w800, color: Colors.black)),
                 SizedBox(width: 10),
-                Text(_myorder.updated_at),
+                Text(_myorder.created_at),
               ],
             ),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -972,8 +1032,7 @@ class _MyOrdersState extends State<MyOrders> {
                         fontWeight: FontWeight.w800, color: Colors.black)),
               ],
             ),
-            ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-                    .orderHasFiles
+            _orderHasFiles
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -992,9 +1051,9 @@ class _MyOrdersState extends State<MyOrders> {
                                     context: context,
                                     builder: (BuildContext context) {
                                       return ViewOrderFilesBottomSheet(
-                                          ordermaterial: oneOrdermaterial,
-                                          token: _token,
-                                          ordernumber: _myorder.id.toString());
+                                        myorder: _myorder,
+                                        token: _token,
+                                      );
                                     });
                               },
                             style: TextStyle(
@@ -1018,28 +1077,33 @@ class _MyOrdersState extends State<MyOrders> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(width: 10),
-                FlatButton(
+                FlatButton.icon(
                     onPressed: () {
                       Navigator.pushNamed(context, RouteNames.editorder,
                           arguments: EditOrderDetails(
-                              _myorder.id,
+                              _myorder.id.toString(),
                               _myorder.description,
                               _myorder.langstyle,
                               _myorder.topic,
                               _myorder.style));
                     },
                     color: Colors.grey[300],
-                    child: Text('Edit')),
+                    icon: Icon(
+                      MyFlutterApp.edit,
+                      color: Colors.blue,
+                    ),
+                    label: Text('Edit')),
                 SizedBox(width: 10),
-                FlatButton(
+                FlatButton.icon(
+                    icon: Icon(
+                      MyFlutterApp.trash_empty,
+                      color: Colors.red,
+                    ),
                     onPressed: () {
-                      setState(() {
-                        _isDeleting = true;
-                      });
-                      _deleteOrder(_myorder);
+                      _showUserStatusDialog(_myorder);
                     },
                     color: Colors.grey[300],
-                    child: Text('Delete')),
+                    label: Text('Delete')),
               ],
             ),
             SizedBox(height: 10),
@@ -1051,24 +1115,29 @@ class _MyOrdersState extends State<MyOrders> {
                     color: Theme.of(context).primaryColor,
                     elevation: 5.0,
                     borderRadius: BorderRadius.circular(30.0),
-                    child: MaterialButton(
+                    child: RaisedButton.icon(
+                      icon: Icon(
+                        MyFlutterApp.attach,
+                        color: Colors.blue,
+                      ),
+
                       onPressed: () {
+                        Navigator.of(context, rootNavigator: true).pop(context);
                         ScopedModel.of<OrderModel>(context,
                                 rebuildOnChange: true)
                             .setTotalCost(double.parse(_myorder.total));
 
                         Navigator.pushNamed(context, RouteNames.uploadMaterial,
                             arguments: FinalOrderDetails(
-                              int.parse(_myorder.id),
-                              _myorder.email,
+                              _myorder.id,
                               _myorder.subject,
                               _myorder.document,
                               _myorder.pages,
                               _myorder.urgency,
                             ));
                       },
-                      minWidth: MediaQuery.of(context).size.width,
-                      child: Text('Attach files'),
+                      // minWidth: MediaQuery.of(context).size.width,
+                      label: Text('Attach files'),
                     )),
               ),
             )
@@ -1145,42 +1214,42 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _pending
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                            
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.money,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
                                           rebuildOnChange: true)
                                       .setTotalCost(double.parse(order.total));
 
                                   Navigator.pushNamed(
-                                    context, RouteNames.makepayments,
+                                      context, RouteNames.makepayments,
                                       arguments: FinalOrderDetails(
-                                        int.parse(order.id),
-                                        order.email,
+                                        int.parse(order.id.toString()),
                                         order.subject,
                                         order.document,
                                         order.pages,
                                         order.urgency,
                                       ));
                                 },
-                                child: Text('Pay'),
-                              ))
-                              ,
-                              DataCell(FlatButton(
-                                color: Colors.grey[300],
-                                onPressed: () {
-                                  _myorder = order;
+                                label: Text('Pay'),
+                              )),
+                              DataCell(FlatButton.icon(
+                                    color: Colors.grey[300],
+                                  onPressed: () {
+                                    _myorder = order;
 
-                                  pendingOrdersView(_myorder);
-                                },
-                                child: Text('View'),
-                              )
-                              )
-                              
+                                    pendingOrdersView(_myorder);
+                                  },
+                                  icon: Icon(MyFlutterApp.eye,
+                                      color: Colors.grey),
+                                  label: Text('View')))
                             ]))
                         .toList(),
                   ),
@@ -1243,22 +1312,40 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _waiting
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
-
                                   pendingOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
-                                onPressed: () {},
-                                child: Text('Edit'),
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () {
+                                  _myorder = order;
+
+                                  Navigator.pushNamed(
+                                      context, RouteNames.editorder,
+                                      arguments: EditOrderDetails(
+                                          _myorder.id.toString(),
+                                          _myorder.description,
+                                          _myorder.langstyle,
+                                          _myorder.topic,
+                                          _myorder.style));
+                                },
+                                label: Text('Edit'),
                               )),
                             ]))
                         .toList(),
@@ -1320,10 +1407,14 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _pending
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.total)),
-                                 DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.money,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
                                           rebuildOnChange: true)
@@ -1332,27 +1423,28 @@ class _MyOrdersState extends State<MyOrders> {
                                   Navigator.pushNamed(
                                       context, RouteNames.makepayments,
                                       arguments: FinalOrderDetails(
-                                        int.parse(order.id),
-                                        order.email,
+                                        order.id,
                                         order.subject,
                                         order.document,
                                         order.pages,
                                         order.urgency,
                                       ));
                                 },
-                                child: Text('Pay'),
-                              )
-                              ),
-                              DataCell(FlatButton(
+                                label: Text('Pay'),
+                              )),
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   pendingOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                           
                             ]))
                         .toList(),
                   ),
@@ -1409,36 +1501,39 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _waiting
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
                                   pendingOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.edit,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
-                                  ScopedModel.of<OrderModel>(context,
-                                          rebuildOnChange: true)
-                                      .setTotalCost(
-                                          double.parse(_myorder.total));
+                                  _myorder = order;
 
                                   Navigator.pushNamed(
-                                      context, RouteNames.paypal,
-                                      arguments: FinalOrderDetails(
-                                        int.parse(_myorder.id),
-                                        _myorder.email,
-                                        _myorder.subject,
-                                        _myorder.document,
-                                        _myorder.pages,
-                                        _myorder.urgency,
-                                      ));
+                                      context, RouteNames.editorder,
+                                      arguments: EditOrderDetails(
+                                          _myorder.id.toString(),
+                                          _myorder.description,
+                                          _myorder.langstyle,
+                                          _myorder.topic,
+                                          _myorder.style));
                                 },
-                                child: Text('Edit'),
+                                label: Text('Edit'),
                               )),
                             ]))
                         .toList(),
@@ -1511,20 +1606,28 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _progress
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   progressRevisionOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.attach,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
                                           rebuildOnChange: true)
@@ -1534,15 +1637,14 @@ class _MyOrdersState extends State<MyOrders> {
                                   Navigator.pushNamed(
                                       context, RouteNames.uploadMaterial,
                                       arguments: FinalOrderDetails(
-                                        int.parse(_myorder.id),
-                                        _myorder.email,
+                                        int.parse(_myorder.id.toString()),
                                         _myorder.subject,
                                         _myorder.document,
                                         _myorder.pages,
                                         _myorder.urgency,
                                       ));
                                 },
-                                child: Text('Add files'),
+                                label: Text('Add files'),
                               ))
                             ]))
                         .toList(),
@@ -1604,19 +1706,28 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _progress
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   progressRevisionOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.attach,
+                                  color: Colors.blue,
+                                  // size: 12.0,
+                                ),
                                 onPressed: () {
                                   ScopedModel.of<OrderModel>(context,
                                           rebuildOnChange: true)
@@ -1626,15 +1737,14 @@ class _MyOrdersState extends State<MyOrders> {
                                   Navigator.pushNamed(
                                       context, RouteNames.uploadMaterial,
                                       arguments: FinalOrderDetails(
-                                        int.parse(_myorder.id),
-                                        _myorder.email,
+                                        int.parse(_myorder.id.toString()),
                                         _myorder.subject,
                                         _myorder.document,
                                         _myorder.pages,
                                         _myorder.urgency,
                                       ));
                                 },
-                                child: Text('Add files'),
+                                label: Text('Attach'),
                               )),
                             ]))
                         .toList(),
@@ -1650,7 +1760,7 @@ class _MyOrdersState extends State<MyOrders> {
         ?
         //Display for tablet
         ListView(children: [
-            _isDeleting ? LinearProgressIndicator() : SizedBox(height: 20),
+            _isSending ? LinearProgressIndicator() : SizedBox(height: 20),
             Center(
               child: Text(
                 'Under Revision',
@@ -1707,36 +1817,34 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _revision
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.download,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
-                                  ScopedModel.of<OrderModel>(context,
-                                          rebuildOnChange: true)
-                                      .setTotalCost(double.parse(order.total));
-
-                                  Navigator.pushNamed(
-                                      context, RouteNames.paypal,
-                                      arguments: FinalOrderDetails(
-                                        int.parse(order.id),
-                                        order.email,
-                                        order.subject,
-                                        order.document,
-                                        order.pages,
-                                        order.urgency,
-                                      ));
+                                  setState(() {
+                                    _isSending = true;
+                                  });
+                                  _downLoadCompletedPaper(order.id.toString());
                                 },
-                                child: Text('Download'),
+                                label: Text('Download'),
                               )),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
                                   progressRevisionOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
                             ]))
                         .toList(),
@@ -1747,7 +1855,7 @@ class _MyOrdersState extends State<MyOrders> {
           ])
         //Display for not tablet
         : ListView(children: [
-            _isDeleting ? LinearProgressIndicator() : SizedBox(height: 20),
+            _isSending ? LinearProgressIndicator() : SizedBox(height: 20),
             Center(
               child: Text(
                 'Under Revision',
@@ -1798,36 +1906,35 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _revision
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   progressRevisionOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.download,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
-                                  ScopedModel.of<OrderModel>(context,
-                                          rebuildOnChange: true)
-                                      .setTotalCost(double.parse(order.total));
+                                  setState(() {
+                                    _isSending = true;
+                                  });
 
-                                  Navigator.pushNamed(
-                                      context, RouteNames.paypal,
-                                      arguments: FinalOrderDetails(
-                                        int.parse(order.id),
-                                        order.email,
-                                        order.subject,
-                                        order.document,
-                                        order.pages,
-                                        order.urgency,
-                                      ));
+                                  _downLoadCompletedPaper(order.id.toString());
                                 },
-                                child: Text('Download'),
+                                label: Text('Download'),
                               )),
                             ]))
                         .toList(),
@@ -1843,7 +1950,7 @@ class _MyOrdersState extends State<MyOrders> {
         ?
         //Display for tablet
         ListView(children: [
-            _isDeleting ? LinearProgressIndicator() : SizedBox(height: 20),
+            _isSending ? LinearProgressIndicator() : SizedBox(height: 20),
             Center(
               child: Text(
                 'Completed ',
@@ -1906,28 +2013,45 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _completed
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.pages)),
                               DataCell(Text(order.document)),
                               DataCell(Text(order.total)),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   completedOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.download,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () {
 //Download the paper button
+
+                                  setState(() {
+                                    _isSending = true;
+                                  });
+                                  _downLoadCompletedPaper(order.id.toString());
                                 },
-                                child: Text('Download'),
+                                label: Text('Download'),
                               )),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.cw,
+                                  color: Colors.grey,
+                                ),
                                 onPressed: () {},
-                                child: Text('Revise'),
+                                label: Text('Revise'),
                               ))
                             ]))
                         .toList(),
@@ -1938,7 +2062,7 @@ class _MyOrdersState extends State<MyOrders> {
           ])
         //Display for not tablet
         : ListView(children: [
-            _isDeleting ? LinearProgressIndicator() : SizedBox(height: 20),
+            _isSending ? LinearProgressIndicator() : SizedBox(height: 20),
             Center(
               child: Text(
                 'Completed',
@@ -1989,28 +2113,43 @@ class _MyOrdersState extends State<MyOrders> {
                     ],
                     rows: _completed
                         .map((order) => DataRow(cells: [
-                              DataCell(Text(order.id)),
+                              DataCell(Text(order.id.toString())),
                               DataCell(Text(order.total)),
-                              DataCell(RaisedButton(
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.download,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isSending = true;
+                                  });
+                                  _downLoadCompletedPaper(order.id.toString());
+                                },
+                                label: Text('Download'),
+                              )),
+                              DataCell(RaisedButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.cw,
+                                  color: Colors.grey,
+                                ),
                                 onPressed: () {
 //Download the paper button
                                 },
-                                child: Text('Download'),
+                                label: Text('Revise'),
                               )),
-                              DataCell(RaisedButton(
-                                onPressed: () {
-//Download the paper button
-                                },
-                                child: Text('Revise'),
-                              )),
-                              DataCell(FlatButton(
+                              DataCell(FlatButton.icon(
+                                icon: Icon(
+                                  MyFlutterApp.eye,
+                                  color: Colors.grey,
+                                ),
                                 color: Colors.grey[300],
                                 onPressed: () {
                                   _myorder = order;
 
                                   completedOrdersView(_myorder);
                                 },
-                                child: Text('View'),
+                                label: Text('View'),
                               )),
                             ]))
                         .toList(),
@@ -2024,13 +2163,10 @@ class _MyOrdersState extends State<MyOrders> {
 
 class ViewOrderFilesBottomSheet extends StatefulWidget {
   const ViewOrderFilesBottomSheet(
-      {@required this.ordermaterial,
-      @required this.token,
-      @required this.ordernumber,
-      Key key})
+      {@required this.myorder, @required this.token, Key key})
       : super(key: key);
-  final List<Ordermaterial> ordermaterial;
-  final String ordernumber;
+  final Myorder myorder;
+
   final String token;
 
   _ViewOrderFilesBottomSheetState createState() =>
@@ -2040,160 +2176,320 @@ class ViewOrderFilesBottomSheet extends StatefulWidget {
 class _ViewOrderFilesBottomSheetState extends State<ViewOrderFilesBottomSheet> {
   final GlobalKey<ScaffoldState> _updateScaffold = new GlobalKey();
   bool _isDeletingorderfiles = false;
+  bool _isTablet = false;
 
-  _showMsg(String msg) {
+  _showMsg(String msg, Color color) {
     final snackbar = SnackBar(
       content: Text(msg),
+      backgroundColor: color,
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
     _updateScaffold.currentState.showSnackBar(snackbar);
   }
 
 //Delete order files
-  void deleteOrderFiles(
-      Ordermaterial material, String id, String filename) async {
+  void deleteOrderFiles(var index, int id) async {
     setState(() {
       _isDeletingorderfiles = true;
     });
 
-    Map _data = {
-      'file_name': filename,
-    };
-
-    String _datainput = jsonEncode(_data);
-
-    String _apiUrl = "/deletematerials/" + id;
+    String _apiUrl =
+        "/order/" + widget.myorder.id.toString() + "/images/" + id.toString();
 
     try {
-      var _response = await Network().deleteOrderFiles(
-        _apiUrl,
-        widget.token,
-        _datainput,
-      );
+      var _response = await Network().deleteData(_apiUrl, widget.token);
 
-      if (_response.statusCode == 422) {
+      if (_response.statusCode == 200) {
         setState(() {
           ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-              .removeOrderMaterial(material);
+              .loadUserOrders();
 
-          widget.ordermaterial.remove(material);
+          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+              .removeOrderMaterial(index);
+
           _isDeletingorderfiles = false;
         });
+        _showMsg('File deleted successfully.', Colors.green);
       } else if (_response.statusCode == 404) {
-        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-            .removeOrderMaterial(material);
-        widget.ordermaterial.remove(material);
+        _showMsg('File not found.Error code 404', Colors.red);
 
-        if (widget.ordermaterial.length == 0) {
-          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-              .orderHasFiles = false;
-        }
-
-        print("response code is 404");
         setState(() {
           _isDeletingorderfiles = false;
         });
       } else {
-        _showMsg('Error code' +
-            _response.statusCode +
-            "Failed to delete the order material");
+        setState(() {
+          _isDeletingorderfiles = false;
+        });
+
+        _showMsg(
+            "Failed to delete the order material.Try again please:Error code" +
+                _response.statusCode.toString(),
+            Colors.red);
       }
     } catch (e) {
+      print(e);
+
       setState(() {
         _isDeletingorderfiles = false;
       });
-      _showMsg("Failed to delete the order material...Try again please");
+      _showMsg(
+          "Failed to delete the order material...Try again please", Colors.red);
     }
   }
 
 //End deleting order files
   Widget build(BuildContext context) {
+    double _width = MediaQuery.of(context).size.width;
+    setState(() {
+      if (_width >= 600) {
+        _isTablet = true;
+      }
+    });
+
     return Scaffold(
       backgroundColor: speedySurfacebackground,
       key: _updateScaffold,
-      body: Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12), topRight: Radius.circular(12))),
-        child: ListView(
-          children: [
-            SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Order #",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black)),
-                SizedBox(width: 10),
-                Text(widget.ordernumber,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black)),
-                SizedBox(width: 10),
-                Text("materials",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black)),
-              ],
-            ),
-            Center(
-              child: Text("============================"),
-            ),
-            _isDeletingorderfiles
-                ? LinearProgressIndicator()
-                : SizedBox(height: 10),
-            SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: DataTable(
-                columnSpacing: 6.0,
-                sortColumnIndex: 0,
-                columns: [
-                  DataColumn(
-                      label: Text(
-                    'File#',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black),
-                  )),
-                  DataColumn(
-                      label: Center(
-                    child: Text(
-                      'Filename',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w800, color: Colors.black),
-                    ),
-                  )),
-                  DataColumn(
-                      label: Text(
-                    'Action ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, color: Colors.black),
-                  )),
-                ],
-                rows: widget.ordermaterial
-                    .map((_file) => DataRow(cells: [
-                          DataCell(Text(_file.id.toString())),
-                          DataCell(Text(_file.original_filename)),
-                          DataCell(
-                            RichText(
-                              text: TextSpan(
-                                  text: 'Delete',
-                                  recognizer: new TapGestureRecognizer()
-                                    ..onTap = () {
-                                      deleteOrderFiles(_file,
-                                          _file.id.toString(), _file.filename);
-                                    },
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      decoration: TextDecoration.underline,
-                                      color: Colors.red)),
-                            ),
+      body: _isTablet
+          ? Container(
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12))),
+              child: ListView(
+                children: [
+                  // SizedBox(height: 30),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     Text("Order #",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //     SizedBox(width: 10),
+                  //     Text(widget.myorder.id.toString(),
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //     SizedBox(width: 10),
+                  //     Text("materials",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //   ],
+                  // ),
+                  // Center(
+                  //   child: Text("======================="),
+                  // ),
+                  _isDeletingorderfiles
+                      ? LinearProgressIndicator()
+                      : SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Center(
+                        child: DataTable(
+                      columnSpacing: 6.0,
+                      sortColumnIndex: 0,
+                      columns: [
+                        DataColumn(
+                            label: Text(
+                          'File#',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, color: Colors.black),
+                        )),
+                        DataColumn(
+                            label: Center(
+                          child: Text(
+                            'Filename',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black),
                           ),
-                        ]))
-                    .toList(),
+                        )),
+                        DataColumn(
+                            label: Text(
+                          'Action ',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, color: Colors.black),
+                        )),
+                      ],
+                      // rows: widget.myorder.materials
+                      rows: ScopedModel.of<UserModel>(context,
+                              rebuildOnChange: true)
+                          .ordermaterials
+                          .map((_file) => DataRow(cells: [
+                                DataCell(Text(_file.id.toString())),
+                                DataCell(Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _file.original_filename,
+                                        maxLines: 3,
+                                        softWrap: false,
+                                        overflow: TextOverflow.fade,
+                                      ),
+                                    ),
+                                  ],
+                                )),
+                                 DataCell(
+                                  IconButton(
+                                    icon: Icon(
+                                      MyFlutterApp.trash_empty,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      var _index = ScopedModel.of<UserModel>(
+                                              context,
+                                              rebuildOnChange: true)
+                                          .ordermaterials
+                                          .indexOf(_file);
+
+                                      deleteOrderFiles(_index, _file.id);
+                                    },
+                                  ),
+
+                                  // RichText(
+                                  //   text: TextSpan(
+                                  //       text: 'Delete',
+                                  //       recognizer: new TapGestureRecognizer()
+                                  //         ..onTap = () {
+                                  //           // deleteOrderFiles(_file,
+                                  //           //     _file.id.toString(), _file.filename);
+                                  //         },
+                                  //       style: TextStyle(
+                                  //           fontWeight: FontWeight.w600,
+                                  //           decoration: TextDecoration.underline,
+                                  //           color: Colors.red)),
+                                  // ),
+                                ),
+                              ]))
+                          .toList(),
+                    )),
+                  )
+                ],
               ),
             )
-          ],
-        ),
-      ),
+          : Container(
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12))),
+              child: ListView(
+                children: [
+                  // SizedBox(height: 30),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     Text("Order #",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //     SizedBox(width: 10),
+                  //     Text(widget.myorder.id.toString(),
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //     SizedBox(width: 10),
+                  //     Text("materials",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w800,
+                  //             color: Colors.black)),
+                  //   ],
+                  // ),
+                  // Text("======================="),
+                  _isDeletingorderfiles
+                      ? LinearProgressIndicator()
+                      : SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Center(
+                        child: DataTable(
+                          showBottomBorder: true,
+                      columnSpacing: 6.0,
+                      sortColumnIndex: 0,
+                      columns: [
+                        DataColumn(
+                            label: Text(
+                          'File#',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, color: Colors.black),
+                        )),
+                        DataColumn(
+                            label: Center(
+                          child: Text(
+                            'Filename',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black),
+                          ),
+                        )),
+                        DataColumn(
+                            label: Text(
+                          'Action ',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, color: Colors.black),
+                        )),
+                      ],
+                      rows: ScopedModel.of<UserModel>(context,
+                              rebuildOnChange: true)
+                          .ordermaterials
+                          .map((_file) => DataRow(cells: [
+                         
+                               
+                                DataCell(Text(_file.id.toString())),
+                                DataCell(
+                                  Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _file.original_filename,
+                                        maxLines: 3,
+                                        softWrap: true,
+                                        overflow: TextOverflow.fade,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                ),
+                                DataCell(
+                                  IconButton(
+                                    icon: Icon(
+                                      MyFlutterApp.trash_empty,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      var _index = ScopedModel.of<UserModel>(
+                                              context,
+                                              rebuildOnChange: true)
+                                          .ordermaterials
+                                          .indexOf(_file);
+
+                                      deleteOrderFiles(_index, _file.id);
+                                    },
+                                  ),
+
+                                  // RichText(
+                                  //   text: TextSpan(
+                                  //       text: 'Delete',
+                                  //       recognizer: new TapGestureRecognizer()
+                                  //         ..onTap = () {
+                                  //           // deleteOrderFiles(_file,
+                                  //           //     _file.id.toString(), _file.filename);
+                                  //         },
+                                  //       style: TextStyle(
+                                  //           fontWeight: FontWeight.w600,
+                                  //           decoration: TextDecoration.underline,
+                                  //           color: Colors.red)),
+                                  // ),
+                                ),
+                              ]))
+                          .toList(),
+                    )),
+                  )
+                ],
+              ),
+            ),
     );
   }
 }

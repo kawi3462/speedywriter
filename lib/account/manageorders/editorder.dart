@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -10,12 +9,12 @@ import 'package:speedywriter/common/page_titles.dart';
 import 'package:speedywriter/common/routenames.dart';
 
 import 'package:speedywriter/common/appbar.dart';
+import 'package:speedywriter/common/cutcornerborders.dart';
 import 'package:speedywriter/common/colors.dart';
 import 'package:speedywriter/ordering/finalorderdetails.dart';
-
+import 'package:speedywriter/serializablemodelclasses/user.dart';
 
 import 'package:speedywriter/network_utils/api.dart';
-
 
 import 'package:speedywriter/account/usermodel.dart';
 
@@ -31,18 +30,21 @@ class EditOrder extends StatefulWidget {
 
 class _EditOrderState extends State<EditOrder> {
   //Order details passed from previous order page==========
+  User _user;
 
   final GlobalKey<ScaffoldState> _scaffoldkeyEditOrder = GlobalKey();
-  final Network _network = Network();
+  // final Network _network = Network();
   bool _isLoading = false;
   String _checked = null;
   bool _isMaterialsNotChecked = false;
   EditOrderDetails _details, _newdetails;
+  final CutCornersBorder cutcornersborder = new CutCornersBorder();
 
 //==============end  variables================
-  _showMsg(String msg) {
+  _showMsg(String msg, Color color) {
     final snackbar = SnackBar(
       content: Text(msg),
+      backgroundColor: color,
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
     _scaffoldkeyEditOrder.currentState.showSnackBar(snackbar);
@@ -61,7 +63,7 @@ class _EditOrderState extends State<EditOrder> {
   TextEditingController _topicController = TextEditingController();
   TextEditingController _instructionsController = TextEditingController();
 
-    FocusNode _focusNodeTopic;
+  FocusNode _focusNodeTopic;
   FocusNode _focusNodeWritingStyle;
   FocusNode _focusNodePrefferedLanguage;
   FocusNode _focusNodeInstructions;
@@ -86,83 +88,91 @@ class _EditOrderState extends State<EditOrder> {
 
       _topic = _topicController.text;
       _instructions = _instructionsController.text;
-   
 
-      Map _data = {
-        'description': _instructions,
-        'langstyle': _prefferedLanguage,
-        'topic': _topic,
-        'style': _writingStyle,
-      };
+      // Map _data = {
+      //   'description': _instructions,
+      //   'langstyle': _prefferedLanguage,
+      //   'topic': _topic,
+      //   'style': _writingStyle,
+      // };
 
-      String _orderJson = jsonEncode(_data);
+      // String _orderJson = jsonEncode(_data);
 
-      //   print(orderJson);
-      _submitOrder(_orderJson, _token, _details.id);
-      //  print("========================token ==============");
-
-      // print(_token);
-      //  print( _email,);
+      _submitOrder(_token);
     }
   }
 
   //End order validation
 
-  void _submitOrder(String orderJson, String token, String id) async {
-    var jsonResponse;
+  void _submitOrder(String token) async {
+
 
     try {
-      var apiUrl = '/updateorder/' + id;
+      var apiUrl = "/user/"+_user.id.toString() +"/orders/" +_details.id +
+          "?description=" +
+          _instructions +
+          "&langstyle=" +
+          _prefferedLanguage +
+          "&topic=" +
+          _topic +
+          "&style=" +
+          _writingStyle;
 
-      var response = await _network.submitData(orderJson, apiUrl, token);
+      // var apiUrl ="/user/27/orders/49?description=eric mutua&langstyle=english&topic=english&style=APA";
+      var response = await Network().updateData(apiUrl,_token);
 
       if (response.statusCode == 200) {
-        jsonResponse = jsonDecode(response.body);
-
-        //   _showMsg("Order submitted successfuly");
-        //Load user orders after adding a new order
-        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+   
+          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
             .loadUserOrders();
-        //End loading user orders
+
+        _showMsg("Order Edited successfuly", Colors.green);
+        //Load user orders after adding a new order
+      
+        // //End loading user orders
 
         setState(() {
           _isLoading = false;
         });
 
-        Navigator.pushNamed(context, RouteNames.uploadMaterial,
-            arguments: FinalOrderDetails(
-              jsonResponse['id'],
-              jsonResponse['email'],
-              jsonResponse['subject'],
-              jsonResponse['document'],
-              jsonResponse['pages'],
-              jsonResponse['urgency'],
-            ));
-      } else if (response.statusCode == 422) {
-        jsonResponse = jsonDecode(response.body);
+        // Navigator.pushNamed(context, RouteNames.uploadMaterial,
+        //     arguments: FinalOrderDetails(
+        //       jsonResponse['id'],
+        //       jsonResponse['subject'],
+        //       jsonResponse['document'],
+        //       jsonResponse['pages'],
+        //       jsonResponse['urgency'],
+        //     ));
+      }
+       else if (response.statusCode == 422) {
+        // jsonResponse = jsonDecode(response.body);
 
-      //  print(jsonResponse);
+        //  print(jsonResponse);
 
         setState(() {
           _isLoading = false;
         });
 
-        _showMsg("Order Not submitted ");
+        _showMsg(
+            "Order Not submitted:Error code" + response.statusCode.toString(),
+            Colors.red);
       } else {
         //   jsonResponse = jsonDecode(response.body);
         setState(() {
           _isLoading = false;
         });
 
-        _showMsg("Order Not submitted ");
+        _showMsg(
+            "Order Not submitted:Error code" + response.statusCode.toString(),
+            Colors.red);
       }
     } 
     catch (e) {
-      // print(e);
+   
       setState(() {
         _isLoading = false;
       });
-      _showMsg("Cannot connect with the  server");
+      _showMsg("Cannot connect with the  server", Colors.red);
     }
   }
 
@@ -174,7 +184,7 @@ class _EditOrderState extends State<EditOrder> {
   void dispose() {
     _topicController.clear();
     _instructionsController.clear();
-     _focusNodeTopic.dispose();
+    _focusNodeTopic.dispose();
     _focusNodeWritingStyle.dispose();
     _focusNodePrefferedLanguage.dispose();
     _focusNodeInstructions.dispose();
@@ -185,38 +195,38 @@ class _EditOrderState extends State<EditOrder> {
 
   @override
   Widget build(BuildContext context) {
-        final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
+    _user = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user;
+    final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
     _token = ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
     _email = ScopedModel.of<UserModel>(context, rebuildOnChange: true).email;
     _details = ModalRoute.of(context).settings.arguments;
-       _focusNodeTopic = FocusNode();
+
+    _focusNodeTopic = FocusNode();
     _focusNodeWritingStyle = FocusNode();
     _focusNodePrefferedLanguage = FocusNode();
     _focusNodeInstructions = FocusNode();
     _focusNodeSubmitButton = FocusNode();
 
-   
-   return Row(
-      children: [
-        if (!displayMobileLayout)
-          const SimpleDrawer(
-            permanentlyDisplay: true,
-          ),
-        Expanded(
+    return Row(children: [
+      if (!displayMobileLayout)
+        const SimpleDrawer(
+          permanentlyDisplay: true,
+        ),
+      Expanded(
           child: Scaffold(
-            key: _scaffoldkeyEditOrder,
-            appBar: AppBar(
-              // when the app isn't displaying the mobile version of app, hide the menu button that is used to open the navigation drawer
-              automaticallyImplyLeading: displayMobileLayout,
-              title: Text(
-                PageTitles.editorder,
+              key: _scaffoldkeyEditOrder,
+              appBar: AppBar(
+                // when the app isn't displaying the mobile version of app, hide the menu button that is used to open the navigation drawer
+                automaticallyImplyLeading: displayMobileLayout,
+                title: Text(
+                  PageTitles.editorder,
+                ),
               ),
-            ),
-            drawer: displayMobileLayout
-                ? const SimpleDrawer(
-                    permanentlyDisplay: false,
-                  )
-                : null,
+              drawer: displayMobileLayout
+                  ? const SimpleDrawer(
+                      permanentlyDisplay: false,
+                    )
+                  : null,
               body: SafeArea(
                   child: Container(
                       padding: EdgeInsets.all(20.0),
@@ -269,7 +279,7 @@ class _EditOrderState extends State<EditOrder> {
                                       onFieldSubmitted: (term) {
                                         FocusScope.of(context).unfocus();
                                       },
-                                      minLines: 5,
+                                      minLines: 3,
                                       keyboardType: TextInputType.multiline,
                                       maxLines: null,
                                       controller: _instructionsController,
@@ -284,34 +294,25 @@ class _EditOrderState extends State<EditOrder> {
                                           labelText: 'Enter Instructions')),
                                   color: speedyBrown900,
                                 )),
-                                   SizedBox(height: 12.0),
-                          _placeOrderCard(),
+                            SizedBox(height: 12.0),
+                            _placeOrderCard(),
                             SizedBox(height: 20.0),
-                          ]
-                          )
-                          )
-                          )
-                          )
-                          )
-                          )
+                          ]))))))
     ]);
   }
 
-
 //===========Writing style method=============
   Widget writingStyle() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+    return InputDecorator(
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+          border: cutcornersborder,
+        ),
         child: DropdownButtonFormField(
             focusNode: _focusNodeWritingStyle,
             autofocus: true,
             autovalidate: true,
+            iconSize: 12,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -350,20 +351,17 @@ class _EditOrderState extends State<EditOrder> {
   }
 
   Widget prefferedLanguage() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+    return InputDecorator(
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+          border: cutcornersborder,
+        ),
         child: DropdownButtonFormField(
             focusNode: _focusNodePrefferedLanguage,
             autovalidate: true,
             isExpanded: true,
             hint: Text("Preferred Language"),
-            iconSize: 40,
+            iconSize: 12,
             validator: (value) {
               if (value == null) {
                 return "Please select preferred language";
@@ -446,7 +444,6 @@ class _EditOrderState extends State<EditOrder> {
   }
 
 //============================End place order card=========================
-
 
 }
 

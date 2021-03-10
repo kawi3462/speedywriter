@@ -2,7 +2,7 @@
 class FinalOrderDetails{
 
   int id;
-  String email;
+
   String subject;
   String urgency;
   String document;
@@ -10,7 +10,7 @@ class FinalOrderDetails{
 
 FinalOrderDetails(
 this.id,
-this.email,
+
 this.subject,
 this.document,
 this.pages,

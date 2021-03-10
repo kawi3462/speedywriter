@@ -4,6 +4,7 @@ import 'package:speedywriter/appscaffold_two.dart';
 
 import 'package:speedywriter/common/page_titles.dart';
 import 'package:speedywriter/common/routenames.dart';
+import 'package:speedywriter/common/cutcornerborders.dart';
 
 
 import 'ordercalculations.dart';
@@ -29,6 +30,7 @@ class GetQuote extends StatefulWidget {
 
 class _GetQuoteState extends State<GetQuote> {
 //Start adding bottom nav==========
+ final CutCornersBorder cutcornersborder=new CutCornersBorder();
 
 
 //==========End adding bottombar===========
@@ -196,16 +198,15 @@ class _GetQuoteState extends State<GetQuote> {
   Widget subjectArea() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(
@@ -248,16 +249,15 @@ class _GetQuoteState extends State<GetQuote> {
 
   Widget typeOfDocument() {
     return ScopedModelDescendant<OrderModel>(builder: (context, model, child) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+      return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField<String>(
-            iconSize: 40,
+            iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -300,16 +300,15 @@ class _GetQuoteState extends State<GetQuote> {
 
   Widget numberOfPages() {
     return ScopedModelDescendant<OrderModel>(builder: (context, child, model) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.grey[50]),
+      return  InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
         child: DropdownButtonFormField<String>(
-            iconSize: 40,
+            iconSize: 10,
             decoration: InputDecoration(
                 fillColor: Colors.grey[50],
                 border: UnderlineInputBorder(
@@ -352,16 +351,15 @@ class _GetQuoteState extends State<GetQuote> {
   Widget urgency() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(
@@ -402,16 +400,15 @@ class _GetQuoteState extends State<GetQuote> {
   Widget acedemicLevel() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(
@@ -453,16 +450,15 @@ class _GetQuoteState extends State<GetQuote> {
   Widget spacingStyle() {
     return ScopedModelDescendant<OrderModel>(
       builder: (context, child, model) {
-        return Container(
-          padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
-          decoration: BoxDecoration(
-              border: Border.all(
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(12.0),
-              color: Colors.grey[50]),
+        return   InputDecorator(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 0),
+             
+                  border: cutcornersborder,
+                    
+                    ),
           child: DropdownButtonFormField<String>(
-              iconSize: 40,
+              iconSize: 10,
               decoration: InputDecoration(
                   fillColor: Colors.grey[50],
                   border: UnderlineInputBorder(

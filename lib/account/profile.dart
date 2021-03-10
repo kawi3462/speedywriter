@@ -6,10 +6,8 @@ import 'package:scoped_model/scoped_model.dart';
 
 import 'package:speedywriter/account/usermodel.dart';
 
-
 import 'package:speedywriter/common/clippathcutcorners.dart';
 import 'package:speedywriter/common/colors.dart';
-
 
 import 'package:speedywriter/network_utils/api.dart';
 
@@ -21,7 +19,11 @@ import 'package:speedywriter/common/page_titles.dart';
 import 'dart:io';
 import 'package:speedywriter/common/routenames.dart';
 
-import 'package:speedywriter/appscaffold_two.dart';
+import 'package:speedywriter/presentation/custom_icons.dart';
+import 'package:speedywriter/common/floatingbottombutton.dart';
+import 'package:speedywriter/common/drawer.dart';
+import 'package:speedywriter/common/bottomnav.dart';
+import 'package:speedywriter/common/contactsbottomsheet.dart';
 
 class Profile extends StatefulWidget {
   _ProfileState createState() => _ProfileState();
@@ -30,14 +32,16 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   final GlobalKey<FormState> _formkey = new GlobalKey();
   final GlobalKey<ScaffoldState> _scaffoldState = new GlobalKey();
+
   TextEditingController _phoneController = TextEditingController();
+
   //Updating profile image variables
   File _imageFile;
   // To track the file uploading state
   bool _isUploading = false;
 
   //end profile image variables
-  String _baseUrl = Network().url + "/adduseravatar";
+
   String _token;
 
   User _user;
@@ -52,20 +56,49 @@ class _ProfileState extends State<Profile> {
   bool _hasprofileimage = false;
   String _imageUrl;
 
-  void _selectedTab(int index) {
+//Bottom navigation menu content
+
+  int index;
+  bool _isIndex = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+void _selectedTab(int index) {
     setState(() {
       _lastSelected = 'TAB: $index';
       if (index == 0) {
         Navigator.pushNamed(context, RouteNames.getquote);
+      } else if (index == 3) {
+        Navigator.pushNamed(context, RouteNames.chatAdmin);
+      } else if (index == 2) {
+        showModalBottomSheet(
+            isDismissible: true,
+            useRootNavigator: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10))),
+            context: context,
+            builder: (BuildContext context) {
+              return  ContactsBottomSheetState();
+            });
       }
     });
   }
+
 
   void _selectedFab(int index) {
     setState(() {
       _lastSelected = 'FAB: $index';
     });
   }
+
+  @override
+//End bottom navigation content
 
 //Scaffold snackbar
   _showMsg(String msg) {
@@ -74,6 +107,7 @@ class _ProfileState extends State<Profile> {
       content: Text(msg),
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
+
     _scaffoldState.currentState.showSnackBar(snackbar);
   }
 
@@ -113,7 +147,7 @@ class _ProfileState extends State<Profile> {
                       onPressed: () {
                         _getImage(context, ImageSource.gallery);
 
-                        Navigator.pop(context);
+                        //  Navigator.of(context).pop();
                       },
                       icon: Icon(Icons.collections),
                       label: Text('Gallery'))
@@ -134,6 +168,9 @@ class _ProfileState extends State<Profile> {
       ScopedModel.of<UserModel>(context, rebuildOnChange: true)
           .setUserProfileImageStatus(false);
     });
+
+    String _baseUrl = Network().url + "/user/" + _user.id.toString() + "/image";
+
     var postUri = Uri.parse(_baseUrl);
     var request = http.MultipartRequest("POST", postUri);
     request.headers['authorization'] = "Bearer $_token";
@@ -142,7 +179,7 @@ class _ProfileState extends State<Profile> {
 
     request.files.add(
       await http.MultipartFile.fromPath(
-        'avatar',
+        'image',
         image.path,
       ),
     );
@@ -152,8 +189,9 @@ class _ProfileState extends State<Profile> {
     try {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      if (response.statusCode == 201) {
-        jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        jsonResponse = json.decode(response.body)['data'];
 
         setState(() {
           _isUploading = false;
@@ -164,7 +202,6 @@ class _ProfileState extends State<Profile> {
 
           _imageUrl = ScopedModel.of<UserModel>(context, rebuildOnChange: true)
               .avatarImageUrl;
-         
         });
         _showMsg("Profile image added successfully");
       } else {
@@ -194,9 +231,8 @@ class _ProfileState extends State<Profile> {
       _imageFile = image;
     });
 
+    Navigator.pop(context);
     _uploadImage(_imageFile);
-
-Navigator.pop(context);
   }
 //End get image method
 
@@ -205,6 +241,7 @@ Navigator.pop(context);
     _user = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user;
     _isUserLoggedIn = ScopedModel.of<UserModel>(context, rebuildOnChange: true)
         .isUserLoggedIn;
+    final bool displayMobileLayout = MediaQuery.of(context).size.width < 600;
 
     if (_isUserLoggedIn) {
       _user = ScopedModel.of<UserModel>(context, rebuildOnChange: true).user;
@@ -219,151 +256,174 @@ Navigator.pop(context);
       });
     }
 
-    return AppScaffoldTwo(
- 
-        key: _scaffoldState,
-    pageTitle: PageTitles.myprofile,
-        body: SafeArea(
-          child: ListView(children: [
-            Center(
-              child: Container(
-                padding: EdgeInsets.fromLTRB(20, 5, 20, 40),
-                child: Card(
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                      SizedBox(height: 10),
-                      InkWell(
-                        onTap: () {
-                          _showDialog();
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                width: 2.0,
-                                color: speedyPurple100,
+    return Row(children: [
+      if (!displayMobileLayout)
+        const SimpleDrawer(
+          permanentlyDisplay: true,
+        ),
+      Expanded(
+          child: Scaffold(
+              key: _scaffoldState,
+              appBar: AppBar(
+                // when the app isn't displaying the mobile version of app, hide the menu button that is used to open the navigation drawer
+                automaticallyImplyLeading: displayMobileLayout,
+                title: Text(
+                  PageTitles.myprofile,
+                ),
+              ),
+              drawer: displayMobileLayout
+                  ? const SimpleDrawer(
+                      permanentlyDisplay: false,
+                    )
+                  : null,
+              body: SafeArea(
+                child: ListView(children: [
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(20, 5, 20, 40),
+                      child: Card(
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                            SizedBox(height: 10),
+                            InkWell(
+                              onTap: () {
+                                _showDialog();
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                      width: 2.0,
+                                      color: speedyPurple100,
+                                    ),
+                                    shape: BoxShape.circle),
+                                child: CircleAvatar(
+                                    backgroundColor: Color(0xFFE6F0FA),
+                                    radius: 75,
+                                    child: ClipOval(
+                                      child: _hasprofileimage
+                                          ? Image.network(
+                                              _imageUrl,
+                                              width: 150,
+                                              height: 150,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : _isUploading
+                                              ? CircularProgressIndicator()
+                                              : CircleAvatar(
+                                                  radius: 74,
+                                                  child: Image.asset(
+                                                      'assets/icons/account.png'),
+                                                ),
+                                    )),
                               ),
-                              shape: BoxShape.circle),
-                          child: CircleAvatar(
-                              backgroundColor: Color(0xFFE6F0FA),
-                              radius: 75,
-                              child: ClipOval(
-                                child: _hasprofileimage
-                                    ? Image.network(
-                                        _imageUrl,
-                                        width: 150,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : _isUploading
-                                        ? CircularProgressIndicator()
-                                        : CircleAvatar(
-                            radius: 74,
-                            child: Image.asset('assets/icons/account.png'),
-                          ),
-                              )),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        _user.name,
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        _user.email,
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "User ID : " + _user.id.toString(),
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Referral Points : " + _user.referral_points,
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 5),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.location_on),
-                          Text(
-                            _user.country,
-                            style: TextStyle(color: speedyBrown900),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 5),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.phone),
-                          Text(
-                            _user.phone,
-                            style: TextStyle(color: speedyBrown900),
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Sign Up Date : " + _user.created_at,
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Last Profile Update : " + _user.updated_at,
-                        style: TextStyle(color: speedyBrown900),
-                      ),
-                      SizedBox(height: 10),
-                      Material(
-                        borderRadius: BorderRadius.circular(30.0),
-                        color: Colors.grey[100],
-                        child: FlatButton(
-                          child: Text('Update Phone Number'),
-                          onPressed: () {
-                            //_updatePhoneBottomSheet(context);
-
-                            showModalBottomSheet(
-                                isDismissible: true,
-                                useRootNavigator: true,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(10),
-                                        topRight: Radius.circular(10))),
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return UpdatePhoneBottomSheet();
-                                });
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Material(
-                          color: Theme.of(context).primaryColor,
-                          elevation: 5.0,
-                          borderRadius: BorderRadius.circular(30.0),
-                          child: Container(
-                            width: 200,
-                            child: MaterialButton(
-                              child: Text('Update Password'),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              _user.name,
+                              style: TextStyle(color: speedyBrown900),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              _user.email,
+                              style: TextStyle(color: speedyBrown900),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "User ID : " + _user.id.toString(),
+                              style: TextStyle(color: speedyBrown900),
+                            ),
+                            SizedBox(height: 5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(Icons.location_on),
+                                Text(
+                                  _user.country,
+                                  style: TextStyle(color: speedyBrown900),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(Icons.phone),
+                                Text(
+                                  _user.phone_number,
+                                  style: TextStyle(color: speedyBrown900),
+                                )
+                              ],
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Sign Up Date : " + _user.created_at,
+                              style: TextStyle(color: speedyBrown900),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Last Profile Update : " + _user.updated_at,
+                              style: TextStyle(color: speedyBrown900),
+                            ),
+                            SizedBox(height: 10),
+                            FlatButton.icon(
+                              color: Colors.grey[300],
+                              icon:
+                                  Icon(Icons.phone_android, color: Colors.blue),
+                              label: Text('Update Phone Number'),
                               onPressed: () {
-                                Navigator.pushNamed(context, RouteNames.updatePassword);
+                                //_updatePhoneBottomSheet(context);
+
+                                showModalBottomSheet(
+                                    isDismissible: true,
+                                    useRootNavigator: true,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(10),
+                                            topRight: Radius.circular(10))),
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return UpdatePhoneBottomSheet();
+                                    });
                               },
                             ),
-                          )),
-                      SizedBox(height: 20),
-                    ])),
+                            SizedBox(height: 10),
+                            RaisedButton.icon(
+                              icon: Icon(
+                                Icons.lock,
+                                color: Colors.blue,
+                              ),
+                              label: Text('Update Password'),
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, RouteNames.updatePassword);
+                              },
+                            ),
+                            SizedBox(height: 20),
+                          ])),
+                    ),
+                  )
+                ]),
               ),
-            )
-          ]),
-        ),
-  
-        
-        
-        );
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.miniCenterDocked,
+              floatingActionButton: FloatingButton(),
+              bottomNavigationBar: FABBottomAppBar(
+                centerItemText: 'Order Now',
+                onTabSelected: _selectedTab,
+                selectedColor: _isIndex ? Color(0xFFFF7E7E) : null,
+                notchedShape: CircularNotchedRectangle(),
+                items: [
+                  FABBottomAppBarItem(
+                      iconData: MyFlutterApp.calculator, text: 'Get Quote'),
+                  FABBottomAppBarItem(
+                      iconData: MyFlutterApp.wallet, text: 'Wallet'),
+                  FABBottomAppBarItem(iconData: Icons.call, text: 'Contact'),
+                  FABBottomAppBarItem(iconData: Icons.chat, text: 'Live Chat'),
+                ],
+              )))
+    ]);
   }
 }
 
@@ -385,9 +445,10 @@ class _UpdatePhoneBottomSheet extends State<UpdatePhoneBottomSheet> {
   TextEditingController _phoneController = TextEditingController();
   User _user;
 
-  _showMsg(String msg) {
+  _showMsg(String msg, Color color) {
     final snackbar = SnackBar(
       behavior: SnackBarBehavior.floating,
+      backgroundColor: color,
       content: Text(msg),
       action: SnackBarAction(label: 'Close', onPressed: () {}),
     );
@@ -395,26 +456,32 @@ class _UpdatePhoneBottomSheet extends State<UpdatePhoneBottomSheet> {
   }
 
   void _updatePhone(String _phone, String _countryname) async {
-    String _email = _user.email;
     String _token =
         ScopedModel.of<UserModel>(context, rebuildOnChange: true).token;
 
-    Map _data = {'email': _email, 'phone': _phone, 'country': _countryname};
-    var apiUrl = "/updatephone";
+    // Map _data = {'name': _user.name, 'phone': _phone, 'country': _countryname};
+    var apiUrl = "/user/" +
+        _user.id.toString() +
+        "?name=" +
+        _user.name +
+        "&country=" +
+        _countryname +
+        "&phone_number=" +
+        _phone;
 
     try {
-      String _jsonData = jsonEncode(_data);
+      // String _jsonData = jsonEncode(_data);
 
-      var _response = await Network().submitData(_jsonData, apiUrl, _token);
+      var _response = await Network().updateData(apiUrl, _token);
 
-      if (_response.statusCode == 201) {
+      if (_response.statusCode == 200) {
         ScopedModel.of<UserModel>(context, rebuildOnChange: true)
             .updatePhoneLoggedUser(_phone, _countryname);
 
         setState(() {
           _isLoading = false;
         });
-        _showMsg("Phone update successful");
+        _showMsg("Phone update successful", Colors.green);
 
         Future.delayed(const Duration(milliseconds: 2000), () {
           Navigator.pop(context);
@@ -424,22 +491,23 @@ class _UpdatePhoneBottomSheet extends State<UpdatePhoneBottomSheet> {
           _isLoading = false;
           _isEnabled = true;
         });
-        _showMsg("Phone  update failed..Kindly try again");
+        _showMsg("Phone  update failed..Kindly try again", Colors.red);
       } else if (_response == null) {
         setState(() {
           _isLoading = false;
           _isEnabled = true;
         });
-        _showMsg("Unable to connect with remote server");
+
+        _showMsg("Unable to connect with remote server", Colors.red);
       } else {
         setState(() {
           _isLoading = false;
           _isEnabled = true;
         });
-        _showMsg("System encoutered an error.Kindly try again");
+        _showMsg("System encoutered an error.Kindly try again", Colors.red);
       }
     } catch (e) {
-      _showMsg("System encoutered an error.Kindly try again");
+      _showMsg("System encoutered an error.Kindly try again", Colors.red);
       setState(() {
         _isLoading = false;
         _isEnabled = true;

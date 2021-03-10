@@ -14,6 +14,9 @@ import 'package:speedywriter/network_utils/api.dart';
 import 'package:email_validator/email_validator.dart';
 
 
+
+
+
 class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();
 }
@@ -84,32 +87,40 @@ class _LoginState extends State<Login> {
     }
 
     Map data = {'email': email, 'password': pass};
-    var apiUrl = "/login";
 
-    var jsonResponse = null;
+
+   
 
     try {
       String jsonData = jsonEncode(data);
 
-      var response = await Network().loginData(jsonData, apiUrl);
+      var response = await Network().loginData(jsonData);
 
       if (response.statusCode == 200) {
-        jsonResponse = json.decode(response.body);
+       var jsonResponse = json.decode(response.body)['data'];
         if (jsonResponse != null) {
-          sharedPreferences.setString("token", jsonResponse['access_token']);
+          sharedPreferences.setString("token", jsonResponse['api_token']);
           sharedPreferences.setString('email', email);
-          var apiUrl = "/user";
+              sharedPreferences.setString('userid', jsonResponse['id'].toString());
+
+        
+          var apiUrl = "/user/"+jsonResponse['id'].toString();
 
           var userdetailsresponse =
-              await Network().getUserData(apiUrl, jsonResponse['access_token']);
+              await Network().getUserData(apiUrl,jsonResponse['api_token']);
 
-          Map userMap = jsonDecode(userdetailsresponse.body);
-          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-              .addUserDetails(userMap);
-          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-              .setUserStatus(true);
-          ScopedModel.of<UserModel>(context, rebuildOnChange: true)
-              .setTokenAndUserEmail(jsonResponse['access_token'], email);
+          Map userMap = jsonDecode(userdetailsresponse.body)['data'];
+          
+        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+        .addUserDetails(userMap);
+
+        ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+          .setUserStatus(true);
+       ScopedModel.of<UserModel>(context, rebuildOnChange: true)
+         .setTokenAndUserEmail(jsonResponse['api_token'], email,jsonResponse['id'].toString());
+
+
+    
 
           setState(() {
             _isLoading = false;
@@ -117,7 +128,8 @@ class _LoginState extends State<Login> {
         }
 
         Navigator.pushNamed(context, RouteNames.home);
-      } else if (response.statusCode == 401) {
+      }
+       else if (response.statusCode == 401) {
         setState(() {
           _isLoading = false;
         });
@@ -128,19 +140,23 @@ class _LoginState extends State<Login> {
         });
 
         _showMsg("Server connection error");
-      } else {
+      } 
+      
+      else {
+
+
         _showMsg("Error..Check internet connection or info your submitting");
         setState(() {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      print(e);
+    } 
+    catch (e) {
+     
       setState(() {
         _isLoading = false;
       });
-      _showMsg(
-          "Cannot connect with the  server..Check your internet connection");
+      _showMsg(e);
     }
   }
 
@@ -275,6 +291,7 @@ class _LoginState extends State<Login> {
                                         : Text('Login'),
                                     elevation: 12.0,
                                     onPressed: () {
+                                      SystemChannels.textInput.invokeMethod('TextInput.hide');
                                       _validateUserLoginDetails();
                                     })),
                             SizedBox(height: 14.0),

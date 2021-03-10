@@ -8,8 +8,7 @@ part of 'myorderseriazable.dart';
 
 Myorder _$MyorderFromJson(Map<String, dynamic> json) {
   return Myorder(
-    json['id'] as String,
-    json['email'] as String,
+    json['id'] as int,
     json['topic'] as String,
     json['subject'] as String,
     json['pages'] as String,
@@ -24,13 +23,13 @@ Myorder _$MyorderFromJson(Map<String, dynamic> json) {
     json['status'] as String,
     json['payment'] as String,
     json['created_at'] as String,
-    json['updated_at'] as String,
-  );
+  )..materials = (json['materials'] as List)
+      ?.map((e) => e == null ? null : Image.fromJson(e as Map<String, dynamic>))
+      ?.toList();
 }
 
 Map<String, dynamic> _$MyorderToJson(Myorder instance) => <String, dynamic>{
       'id': instance.id,
-      'email': instance.email,
       'topic': instance.topic,
       'subject': instance.subject,
       'pages': instance.pages,
@@ -45,5 +44,5 @@ Map<String, dynamic> _$MyorderToJson(Myorder instance) => <String, dynamic>{
       'status': instance.status,
       'payment': instance.payment,
       'created_at': instance.created_at,
-      'updated_at': instance.updated_at,
+      'materials': instance.materials,
     };

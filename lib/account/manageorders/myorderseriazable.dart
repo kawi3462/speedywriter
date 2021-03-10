@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:speedywriter/serializablemodelclasses/image.dart';
 
 
 part 'myorderseriazable.g.dart';
@@ -8,7 +9,7 @@ part 'myorderseriazable.g.dart';
 class Myorder{
   Myorder(
     this.id,
-  this.email,
+
   this.topic,
   this.subject,
   this.pages,
@@ -23,10 +24,10 @@ class Myorder{
   this.status,
   this.payment,
   this.created_at,
- this.updated_at,
+
   );
-  String id;
-  String email;
+ int id;
+
   String topic;
   String subject;
   String pages;
@@ -41,7 +42,7 @@ class Myorder{
   String status;
   String payment;
   String created_at;
-  String updated_at;
+  List<Image>materials;
 
 
 factory Myorder.fromJson(Map<String,dynamic>json)=>_$MyorderFromJson(json);

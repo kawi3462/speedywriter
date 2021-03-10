@@ -16,6 +16,9 @@ static const String   myorders='/myorders';
 static const String   editorder='/editorder';
 static const String   cardpayments='/cardpayments';
 static const String   makepayments='/makepayments';
+static const String   chatAdmin='/chatadmin';
+static const String   referral='/referral';
+static const String   policy='/policy';
 
 
 }

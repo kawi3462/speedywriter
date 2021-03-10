@@ -13,5 +13,10 @@ class PageTitles {
     static const String editorder = "Edit Order ";
         static const String cardpayments = "Card Payments ";
          static const String billing = "Billing Details ";
+static const String chatwithadmin = "Chat With Admin";
+static const String referral = "Referrals";
+static const String policy = "Policy";
+
+         
         
 }
